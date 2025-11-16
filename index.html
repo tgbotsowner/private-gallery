@@ -1,86 +1,95 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<!-- iOS PWA -->
+<!-- iOS standalone full screen -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>Галерея</title>
+<meta name="apple-mobile-web-app-title" content="Gallery">
+
+<link rel="manifest" href="manifest.json">
+<title>Gallery</title>
 
 <style>
+    :root {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
     body {
         margin: 0;
-        padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+        height: 100vh;
         background: #000;
-        color: #fff;
+        color: white;
         font-family: Arial, sans-serif;
         display: flex;
         flex-direction: column;
         align-items: center;
         overflow: hidden;
-        height: 100dvh; /* correct fullscreen on iOS */
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
     }
 
     h3 {
-        margin: 12px 0;
+        margin-top: 8px;
         font-size: 22px;
-        font-weight: 600;
     }
 
     #viewer {
-        width: 100%;
-        flex: 1;
+        width: 100vw;
+        height: 70vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        overflow: hidden;
+        background: black;
     }
 
     #viewer img {
         max-width: 100%;
         max-height: 100%;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: 0.2s ease-in-out;
+        border-radius: 8px;
+        transition: .3s;
     }
 
     #controls {
-        width: 100%;
         display: flex;
         justify-content: center;
-        gap: 10px;
-        padding: 10px 0;
-        background: rgba(0,0,0,0.4);
-        backdrop-filter: blur(6px);
+        flex-wrap: wrap;
+        margin-top: 12px;
     }
 
     button {
-        padding: 10px 14px;
-        font-size: 15px;
-        color: white;
         background: #222;
+        color: white;
+        padding: 12px 18px;
+        border-radius: 10px;
         border: none;
-        border-radius: 8px;
-        cursor: pointer;
+        font-size: 17px;
+        margin: 6px;
     }
 
-    /* FULLSCREEN MODE */
-    body.fullscreen h3,
-    body.fullscreen #controls {
-        display: none;
+    /* FULL REALSCREEN MODE */
+    .fullscreen h3,
+    .fullscreen #controls {
+        display: none !important;
     }
 
-    body.fullscreen #viewer {
+    .fullscreen #viewer {
         position: fixed;
-        top: 0; left: 0;
+        top: 0;
+        left: 0;
         width: 100vw;
-        height: 100dvh;
-        background: #000;
-        z-index: 9999;
+        height: 100vh;
+        z-index: 99;
+        background: black;
+    }
+
+    .fullscreen #viewer img {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover !important;
     }
 </style>
 </head>
@@ -94,72 +103,82 @@
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
 <div id="controls">
-    <button onclick="openPicker()">Добавить фото</button>
+    <button onclick="document.getElementById('fileInput').click()">Добавить фото</button>
     <button onclick="removePhoto()">Удалить фото</button>
     <button onclick="toggleFullscreen()">Полный экран</button>
 </div>
 
 <script>
-let images = JSON.parse(localStorage.getItem('savedImages') || "[]");
+let images = [];
 let index = 0;
-let isFull = false;
-render();
+let isFullscreen = false;
 
-function openPicker(){ document.getElementById("fileInput").click(); }
+if (localStorage.getItem("savedImages")) {
+    images = JSON.parse(localStorage.getItem("savedImages"));
+}
+showImage();
 
-document.getElementById("fileInput").addEventListener("change", async e => {
+document.getElementById("fileInput").addEventListener("change", async (e) => {
     for (let file of e.target.files) {
-        let base64 = await toBase64(file);
-        images.push(base64);
+        images.push(await toBase64(file));
     }
     save();
-    render();
+    showImage();
 });
 
-function toBase64(file){
-    return new Promise((res, rej)=>{
-        const r=new FileReader();
-        r.onload=()=>res(r.result);
-        r.onerror=rej;
+function toBase64(file) {
+    return new Promise(res => {
+        let r = new FileReader();
+        r.onload = () => res(r.result);
         r.readAsDataURL(file);
     });
 }
 
-function render(){
-    const v=document.getElementById("viewer");
-    if (!images.length) return v.innerHTML="<span>Нет фото</span>";
-    v.innerHTML=`<img id="photo" src="${images[index]}">`;
-    document.getElementById("photo").onclick = next;
+function showImage() {
+    const viewer = document.getElementById("viewer");
+    viewer.innerHTML = images.length ? `<img id="photo" src="${images[index]}">` : "<span>Нет фото</span>";
+
+    if (images.length) {
+        document.getElementById("photo").onclick = next;
+    }
 }
 
-function next(){
-    if (!images.length) return;
+function next() {
     index = (index + 1) % images.length;
-    render();
+    showImage();
 }
 
-function removePhoto(){
-    if(!images.length) return;
-    images.splice(index,1);
-    if(index>0) index--;
+function removePhoto() {
+    if (!images.length) return;
+    images.splice(index, 1);
+    if (index > 0) index--;
     save();
-    render();
+    showImage();
 }
 
-function save(){ localStorage.setItem("savedImages", JSON.stringify(images)); }
+function save() {
+    localStorage.setItem("savedImages", JSON.stringify(images));
+}
 
-async function toggleFullscreen(){
-    isFull = !isFull;
-    document.body.classList.toggle("fullscreen", isFull);
+async function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+    document.body.classList.toggle("fullscreen", isFullscreen);
 
-    try{
-        if(isFull){
-            await document.documentElement.requestFullscreen?.();
+    const doc = document.documentElement;
+
+    if (isFullscreen) {
+        if (doc.requestFullscreen) {
+            await doc.requestFullscreen();
         } else {
-            await document.exitFullscreen?.();
+            window.scrollTo(0, 1);
         }
-    }catch(e){}
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+    }
 }
+
+// PWA Service Worker
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
 </script>
 
 </body>
