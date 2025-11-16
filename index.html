@@ -2,185 +2,164 @@
 <html lang="ru">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 
-    <!-- iOS Fullscreen support -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gallery">
-    <link rel="apple-touch-icon" href="icon-192.png">
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Галерея</title>
 
-    <title>Галерея</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
+<style>
+    body {
+        margin: 0;
+        padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+        height: 100dvh; /* correct fullscreen on iOS */
+    }
 
-    <style>
-        body {
-            margin: 0;
-            background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-        }
+    h3 {
+        margin: 12px 0;
+        font-size: 22px;
+        font-weight: 600;
+    }
 
-        h3 {
-            margin: 10px 0;
-            font-size: 22px;
-            font-weight: 600;
-        }
+    #viewer {
+        width: 100%;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
 
-        #viewer {
-            width: 100vw;
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+    #viewer img {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.2s ease-in-out;
+    }
 
-        #viewer img {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.2s ease-in-out;
-        }
+    #controls {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px 0;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(6px);
+    }
 
-        #controls {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 0;
-        }
+    button {
+        padding: 10px 14px;
+        font-size: 15px;
+        color: white;
+        background: #222;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
 
-        button {
-            padding: 10px 14px;
-            font-size: 15px;
-            color: white;
-            background: #202020;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
+    /* FULLSCREEN MODE */
+    body.fullscreen h3,
+    body.fullscreen #controls {
+        display: none;
+    }
 
-        /* FULLSCREEN MODE */
-        body.fullscreen h3,
-        body.fullscreen #controls {
-            display: none;
-        }
-
-        body.fullscreen #viewer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 9999;
-        }
-    </style>
+    body.fullscreen #viewer {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100dvh;
+        background: #000;
+        z-index: 9999;
+    }
+</style>
 </head>
 
 <body>
 
-    <h3>Галерея</h3>
+<h3>Галерея</h3>
 
-    <div id="viewer"><span>Нет фото</span></div>
+<div id="viewer"><span>Нет фото</span></div>
 
-    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
 
-    <div id="controls">
-        <button onclick="selectPhotos()">Добавить фото</button>
-        <button onclick="removePhoto()">Удалить фото</button>
-        <button onclick="toggleFullscreen()">Полный экран</button>
-    </div>
+<div id="controls">
+    <button onclick="openPicker()">Добавить фото</button>
+    <button onclick="removePhoto()">Удалить фото</button>
+    <button onclick="toggleFullscreen()">Полный экран</button>
+</div>
 
 <script>
-    let images = JSON.parse(localStorage.getItem('savedImages') || "[]");
-    let index = 0;
-    let isFull = false;
+let images = JSON.parse(localStorage.getItem('savedImages') || "[]");
+let index = 0;
+let isFull = false;
+render();
 
+function openPicker(){ document.getElementById("fileInput").click(); }
+
+document.getElementById("fileInput").addEventListener("change", async e => {
+    for (let file of e.target.files) {
+        let base64 = await toBase64(file);
+        images.push(base64);
+    }
+    save();
     render();
+});
 
-    function selectPhotos() {
-        document.getElementById("fileInput").click();
-    }
-
-    document.getElementById("fileInput").addEventListener("change", async (e) => {
-        for (let file of e.target.files) {
-            let base64 = await toBase64(file);
-            images.push(base64);
-        }
-        save();
-        render();
+function toBase64(file){
+    return new Promise((res, rej)=>{
+        const r=new FileReader();
+        r.onload=()=>res(r.result);
+        r.onerror=rej;
+        r.readAsDataURL(file);
     });
+}
 
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const r = new FileReader();
-            r.onload = () => resolve(r.result);
-            r.onerror = err => reject(err);
-            r.readAsDataURL(file);
-        });
-    }
+function render(){
+    const v=document.getElementById("viewer");
+    if (!images.length) return v.innerHTML="<span>Нет фото</span>";
+    v.innerHTML=`<img id="photo" src="${images[index]}">`;
+    document.getElementById("photo").onclick = next;
+}
 
-    function render() {
-        const container = document.getElementById("viewer");
-        if (!images.length) {
-            container.innerHTML = "<span>Нет фото</span>";
-            return;
+function next(){
+    if (!images.length) return;
+    index = (index + 1) % images.length;
+    render();
+}
+
+function removePhoto(){
+    if(!images.length) return;
+    images.splice(index,1);
+    if(index>0) index--;
+    save();
+    render();
+}
+
+function save(){ localStorage.setItem("savedImages", JSON.stringify(images)); }
+
+async function toggleFullscreen(){
+    isFull = !isFull;
+    document.body.classList.toggle("fullscreen", isFull);
+
+    try{
+        if(isFull){
+            await document.documentElement.requestFullscreen?.();
+        } else {
+            await document.exitFullscreen?.();
         }
-        container.innerHTML = `<img id="photo" src="${images[index]}">`;
-        document.getElementById("photo").onclick = next;
-    }
-
-    function next() {
-        if (!images.length) return;
-        index = (index + 1) % images.length;
-        render();
-    }
-
-    function removePhoto() {
-        if (!images.length) return;
-        images.splice(index, 1);
-        if (index > 0) index--;
-        save();
-        render();
-    }
-
-    function save() {
-        localStorage.setItem("savedImages", JSON.stringify(images));
-    }
-
-    async function toggleFullscreen() {
-        isFull = !isFull;
-        document.body.classList.toggle("fullscreen", isFull);
-
-        try {
-            if (isFull) {
-                if (document.documentElement.requestFullscreen) {
-                    await document.documentElement.requestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    await document.exitFullscreen();
-                }
-            }
-        } catch (e) {}
-    }
-
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("service-worker.js");
-    }
+    }catch(e){}
+}
 </script>
 
 </body>
