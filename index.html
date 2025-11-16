@@ -1,124 +1,154 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Галерея</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<style>
-    body { margin:0; background:#000; color:#fff; font-family:Arial; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
-    h3 { margin: 8px 0 6px 0; font-size:20px; }
-    #viewer {
-        width:100vw; height:70vh; background:#111;
-        display:flex; justify-content:center; align-items:center;
-        overflow:hidden; position:relative; touch-action:manipulation;
-    }
-    #viewer img {
-        max-width:100%; max-height:100%;
-        border-radius:10px;
-        cursor:pointer;
-        transition:all .25s ease-in-out;
-    }
-    #controls { display:flex; flex-wrap:wrap; justify-content:center; margin-top:10px; }
-    button {
-        padding:10px 18px; margin:5px; border:none; border-radius:8px;
-        font-size:16px; cursor:pointer; background:#222; color:#fff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 
-    /* FULLSCREEN SIMULATION */
-    .fullscreen #viewer {
-        position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000;
-        z-index:9999;
-    }
-    .fullscreen h3,
-    .fullscreen #controls {
-        display:none;
-    }
-</style>
+    <!-- iOS fullscreen -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gallery">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <title>Gallery</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+
+    <style>
+        body {
+            margin: 0;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h3 {
+            margin: 10px 0;
+        }
+
+        #viewer {
+            width: 100vw;
+            height: calc(100vh - 120px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #viewer img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        #controls button {
+            margin: 6px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+        }
+
+        /* True fullscreen mode */
+        .fullscreen {
+            padding: 0 !important;
+        }
+
+        .fullscreen #viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            z-index: 9999;
+        }
+
+        .fullscreen #controls,
+        .fullscreen h3 {
+            display: none;
+        }
+    </style>
 </head>
+
 <body>
+    <h3>Галерея</h3>
 
-<h3>Галерея</h3>
+    <div id="viewer"><span>Нет фото</span></div>
 
-<div id="viewer"><span>Нет фото</span></div>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
-<input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <div id="controls">
+        <button onclick="document.getElementById('fileInput').click()">Добавить фото</button>
+        <button onclick="removePhoto()">Удалить фото</button>
+        <button onclick="toggleFull()">Полный экран</button>
+    </div>
 
-<div id="controls">
-    <button onclick="document.getElementById('fileInput').click()">Добавить фото</button>
-    <button onclick="removePhoto()">Удалить фото</button>
-    <button onclick="toggleFull()">Полный экран</button>
-</div>
+    <script>
+        let images = JSON.parse(localStorage.getItem('savedImages') || "[]");
+        let index = 0;
+        let isFull = false;
 
-<script>
-let images = [];
-let index = 0;
-let isFull = false;
+        showImage();
 
-if (localStorage.getItem('savedImages')) {
-    images = JSON.parse(localStorage.getItem('savedImages'));
-}
-showImage();
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            for (let file of e.target.files) {
+                let base64 = await toBase64(file);
+                images.push(base64);
+            }
+            saveImages();
+            showImage();
+        });
 
-document.getElementById('fileInput').addEventListener('change', async function(event){
-    for (let file of event.target.files) {
-        let base64 = await toBase64(file);
-        images.push(base64);
-    }
-    saveImages();
-    showImage();
-});
+        const toBase64 = file => new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result);
+            r.onerror = rej;
+            r.readAsDataURL(file);
+        });
 
-function toBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = err => reject(err);
-    });
-}
+        const showImage = () => {
+            const v = document.getElementById("viewer");
+            if (!images.length) return v.innerHTML = "<span>Нет фото</span>";
+            v.innerHTML = `<img id="photo" src="${images[index]}">`;
+            document.getElementById("photo").onclick = nextImage;
+        };
 
-function showImage() {
-    const viewer = document.getElementById('viewer');
-    viewer.innerHTML = images.length ? `<img id="photo" src="${images[index]}">` : "<span>Нет фото</span>";
-    if(images.length){
-        document.getElementById("photo").onclick = nextImage;
-    }
-}
+        const nextImage = () => {
+            if (!images.length) return;
+            index = (index + 1) % images.length;
+            showImage();
+        };
 
-function nextImage() {
-    if (!images.length) return;
-    index = (index + 1) % images.length;
-    showImage();
-}
+        const removePhoto = () => {
+            if (!images.length) return;
+            images.splice(index, 1);
+            if (index > 0) index--;
+            saveImages();
+            showImage();
+        };
 
-function removePhoto() {
-    if (!images.length) return;
-    images.splice(index,1);
-    if (index > 0) index--;
-    saveImages();
-    showImage();
-}
+        const saveImages = () => localStorage.setItem('savedImages', JSON.stringify(images));
 
-function saveImages() {
-    localStorage.setItem('savedImages', JSON.stringify(images));
-}
+        const toggleFull = () => {
+            isFull = !isFull;
+            document.body.classList.toggle("fullscreen", isFull);
+        };
 
-function toggleFull() {
-    isFull = !isFull;
-    if(isFull){
-        document.body.classList.add("fullscreen");
-    } else {
-        document.body.classList.remove("fullscreen");
-    }
-}
-
-// Register PWA
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
-</script>
-
+        // PWA activation
+        if ("serviceWorker" in navigator)
+            navigator.serviceWorker.register("service-worker.js");
+    </script>
 </body>
+
 </html>
