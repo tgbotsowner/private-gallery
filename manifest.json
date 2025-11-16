@@ -1,6 +1,6 @@
 {
   "name": "Glovo",
-  "short_name": "GLovo",
+  "short_name": "Glovo",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
