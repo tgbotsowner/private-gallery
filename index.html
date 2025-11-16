@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 
 <!-- PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,71 +17,72 @@
 <style>
     body {
         margin: 0;
-        background: #000;
-        color: #fff;
+        padding: 0;
+        background: black;
+        color: white;
         font-family: Arial, sans-serif;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        height: 100vh;
-        overflow-y: auto; /* allow scrolling in normal mode */
+        overflow-y: auto;
         overscroll-behavior: contain;
     }
 
     h3 {
-        margin: 12px 0;
+        text-align: center;
         font-size: 22px;
-        font-weight: bold;
+        margin: 10px 0 5px;
     }
 
     #viewer {
+        flex: 1;
         width: 100%;
-        min-height: 65vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        background: #000;
+        background: black;
         overflow: hidden;
-        position: relative;
     }
 
+    /* Standard display (not fullscreen) */
     #viewer img {
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: auto;
+        max-height: 90vh;
         object-fit: contain;
         display: block;
-        background: black;
-        touch-action: manipulation;
+    }
+
+    /* Fullscreen perfect fit for vertical screenshots */
+    .fullscreen #viewer img {
+        width: 100vw;
+        height: 100vh;
+        object-fit: fill !important;
     }
 
     #controls {
         width: 100%;
-        background: #000;
-        padding: 10px 0;
+        background: black;
         display: flex;
         justify-content: center;
-        gap: 10px;
-        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px;
         border-top: 1px solid #222;
         position: sticky;
         bottom: 0;
+        z-index: 10;
     }
 
     button {
-        padding: 10px 16px;
+        flex: 1;
+        background: #222;
+        color: white;
+        padding: 10px 14px;
         border: none;
         border-radius: 8px;
-        background: #222;
-        color: #fff;
-        font-size: 16px;
-        cursor: pointer;
+        font-size: 15px;
     }
 
-    /* FULLSCREEN MODE */
-    .fullscreen {
-        overflow: hidden !important; /* block scroll only in fullscreen */
-    }
-
+    /* Hide UI in fullscreen */
     .fullscreen h3,
     .fullscreen #controls {
         display: none;
@@ -91,13 +92,7 @@
         position: fixed;
         inset: 0;
         z-index: 9999;
-        background: #000;
-    }
-
-    .fullscreen #viewer img {
-        width: 100vw;
-        height: 100vh;
-        object-fit: contain;
+        background: black;
     }
 </style>
 </head>
@@ -105,85 +100,82 @@
 <body>
 
 <h3>Галерея</h3>
-<div id="viewer"><span>Нет фото</span></div>
+
+<div id="viewer"><span style="opacity:0.5">Нет фото</span></div>
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
 <div id="controls">
-    <button onclick="pickPhotos()">Добавить</button>
-    <button onclick="deletePhoto()">Удалить</button>
-    <button onclick="toggleFullscreen()">Полный экран</button>
+    <button onclick="pick()">Добавить</button>
+    <button onclick="removePhoto()">Удалить</button>
+    <button onclick="toggleFull()">Полный экран</button>
 </div>
 
 <script>
-    let photos = JSON.parse(localStorage.getItem("photos") || "[]");
-    let index = 0;
-    let fullscreen = false;
+let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+let index = 0;
+let fs = false;
 
-    function pickPhotos() {
-        document.getElementById("fileInput").click();
+function pick() {
+    document.getElementById("fileInput").click();
+}
+
+document.getElementById("fileInput").addEventListener("change", async e => {
+    for (let f of e.target.files) {
+        photos.push(await toBase64(f));
     }
-
-    document.getElementById("fileInput").addEventListener("change", async (e) => {
-        for (let f of e.target.files) {
-            let base64 = await fileToBase64(f);
-            photos.push(base64);
-        }
-        save();
-        show();
-    });
-
-    function fileToBase64(file) {
-        return new Promise(res => {
-            let r = new FileReader();
-            r.onload = () => res(r.result);
-            r.readAsDataURL(file);
-        });
-    }
-
-    function show() {
-        const div = document.getElementById("viewer");
-        if (!photos.length) return div.innerHTML = "<span>Нет фото</span>";
-        div.innerHTML = `<img src="${photos[index]}" id="photo">`;
-        document.getElementById("photo").onclick = next;
-    }
-
-    function next() {
-        if (!photos.length) return;
-        index = (index + 1) % photos.length;
-        show();
-    }
-
-    function deletePhoto() {
-        if (!photos.length) return;
-        photos.splice(index, 1);
-        if (index > 0) index--;
-        save();
-        show();
-    }
-
-    function save() {
-        localStorage.setItem("photos", JSON.stringify(photos));
-    }
-
-    async function toggleFullscreen() {
-        fullscreen = !fullscreen;
-        document.body.classList.toggle("fullscreen", fullscreen);
-
-        const el = document.documentElement;
-
-        if (fullscreen) {
-            if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
-            setTimeout(() => window.scrollTo(0,1), 300);
-        } else {
-            if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
-        }
-    }
-
+    save();
     show();
+});
 
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("service-worker.js");
+function toBase64(file) {
+    return new Promise(res => {
+        let r = new FileReader();
+        r.onload = () => res(r.result);
+        r.readAsDataURL(file);
+    });
+}
+
+function show() {
+    const v = document.getElementById("viewer");
+    if (!photos.length) return v.innerHTML = "<span style='opacity:0.5'>Нет фото</span>";
+    v.innerHTML = `<img src="${photos[index]}" onclick="next()">`;
+}
+
+function next() {
+    index = (index + 1) % photos.length;
+    show();
+}
+
+function removePhoto() {
+    if (!photos.length) return;
+    photos.splice(index, 1);
+    if (index > 0) index--;
+    save();
+    show();
+}
+
+function save() {
+    localStorage.setItem("photos", JSON.stringify(photos));
+}
+
+function toggleFull() {
+    fs = !fs;
+    document.body.classList.toggle("fullscreen", fs);
+
+    let doc = document.documentElement;
+
+    if (fs) {
+        if (doc.requestFullscreen) doc.requestFullscreen().catch(()=>{});
+        setTimeout(()=>window.scrollTo(0, 1), 150);
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
     }
+}
+
+show();
+
+// Enable PWA
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
 </script>
 
 </body>
