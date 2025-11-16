@@ -3,54 +3,72 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Gallery" />
+    <meta name="apple-mobile-web-app-status-bar" content="black-translucent" />
 
     <title>Gallery</title>
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#000" />
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
         body {
             margin: 0;
-            padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+            padding: 0;
+            width: 100%;
+            height: 100%;
             background: #000;
             color: #fff;
             font-family: Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
         }
 
         h3 {
             text-align: center;
-            padding-top: env(safe-area-inset-top, 10px);
+            padding: max(10px, env(safe-area-inset-top)) 0 0 0;
             margin: 8px 0;
+            z-index: 10;
         }
 
         #viewer {
-            flex: 1;
-            width: 100%;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             background: #000;
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        #viewer span {
+            font-size: 18px;
+            color: #666;
         }
 
         #viewer img {
             display: block;
-            width: auto;
-            height: auto;
-            max-width: 100%;
-            max-height: 100%;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
+            object-position: center;
         }
 
         #controls {
@@ -58,8 +76,13 @@
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+            padding: 10px 0 calc(10px + max(10px, env(safe-area-inset-bottom)));
             gap: 10px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 5;
         }
 
         button {
@@ -70,6 +93,7 @@
             border-radius: 10px;
             font-size: 16px;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         button:active {
@@ -77,53 +101,40 @@
         }
 
         /* FULLSCREEN */
-        .fullscreen h3,
-        .fullscreen #controls {
+        body.fullscreen {
+            width: 100vw;
+            height: 100vh;
+            padding: 0;
+        }
+
+        body.fullscreen h3 {
             display: none;
         }
 
-        .fullscreen body {
-            padding: 0;
+        body.fullscreen #controls {
+            display: none;
         }
 
-        .fullscreen #viewer {
+        body.fullscreen #viewer {
+            width: 100vw;
+            height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            background: #000;
-            overflow: hidden;
-            -webkit-overflow-scrolling: touch;
+            z-index: 9999;
         }
 
-        .fullscreen #viewer img {
-            width: 100%;
-            height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        /* Fullscreen API */
-        #viewer:fullscreen img,
-        #viewer:-webkit-full-screen img,
-        #viewer:-moz-full-screen img {
-            width: 100%;
-            height: 100%;
+        /* Убрать полосы прокрутки */
+        ::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
 
 <body>
     <h3>Галерея</h3>
-
     <div id="viewer"><span>Нет фото</span></div>
-
     <input type="file" id="picker" accept="image/*" hidden multiple />
-
     <div id="controls">
         <button onclick="pick()">Добавить</button>
         <button onclick="removePhoto()">Удалить</button>
@@ -164,6 +175,7 @@
             }
             area.innerHTML = `<img src="${photos[index]}" id="img">`;
             document.getElementById("img").onclick = next;
+            document.getElementById("img").style.touchAction = "manipulation";
         }
 
         function next() {
@@ -174,7 +186,7 @@
         function removePhoto() {
             if (!photos.length) return;
             photos.splice(index, 1);
-            if (index > 0) index--;
+            if (index >= photos.length && index > 0) index--;
             save();
             show();
         }
@@ -186,48 +198,19 @@
         function toggleFull() {
             full = !full;
             document.body.classList.toggle("fullscreen", full);
-
-            const elem = document.getElementById("viewer");
-
-            if (full) {
-                // Запрос полноэкранного режима
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen().catch(err => {
-                        console.log("Fullscreen error:", err);
-                    });
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                } else if (elem.mozRequestFullScreen) {
-                    elem.mozRequestFullScreen();
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
-                }
-            } else {
-                // Выход из полноэкранного режима
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
         }
 
-        // Выход из полноэкранного режима по ESC
-        document.addEventListener("fullscreenchange", () => {
-            if (!document.fullscreenElement) {
-                full = false;
-                document.body.classList.remove("fullscreen");
-            }
+        // Скрыть адресную строку браузера
+        window.addEventListener("load", () => {
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 100);
         });
 
         show();
 
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("service-worker.js");
+            navigator.serviceWorker.register("service-worker.js").catch(() => { });
         }
     </script>
 </body>
