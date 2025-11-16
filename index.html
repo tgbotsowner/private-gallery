@@ -1,185 +1,183 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-<!-- iOS standalone full screen -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Gallery">
+    <!-- PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Gallery">
 
-<link rel="manifest" href="manifest.json">
-<title>Gallery</title>
+    <title>Gallery</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000">
 
-<style>
-    :root {
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-    body {
-        margin: 0;
-        height: 100vh;
-        background: #000;
-        color: white;
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        overflow: hidden;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        user-select: none;
-    }
+        h3 {
+            margin: 10px 0;
+            font-size: 20px;
+        }
 
-    h3 {
-        margin-top: 8px;
-        font-size: 22px;
-    }
+        #viewer {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+        }
 
-    #viewer {
-        width: 100vw;
-        height: 70vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: black;
-    }
+        #viewer img {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain !important;
+            background: black;
+            display: block;
+        }
 
-    #viewer img {
-        max-width: 100%;
-        max-height: 100%;
-        border-radius: 8px;
-        transition: .3s;
-    }
+        #controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            background: #000;
+            width: 100%;
+            padding: 7px 0;
+            border-top: 1px solid #222;
+        }
 
-    #controls {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: 12px;
-    }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            background: #222;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+        }
 
-    button {
-        background: #222;
-        color: white;
-        padding: 12px 18px;
-        border-radius: 10px;
-        border: none;
-        font-size: 17px;
-        margin: 6px;
-    }
+        /* FULLSCREEN MODE */
+        .fullscreen h3,
+        .fullscreen #controls {
+            display: none;
+        }
 
-    /* FULL REALSCREEN MODE */
-    .fullscreen h3,
-    .fullscreen #controls {
-        display: none !important;
-    }
+        .fullscreen #viewer {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+        }
 
-    .fullscreen #viewer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 99;
-        background: black;
-    }
-
-    .fullscreen #viewer img {
-        width: 100vw;
-        height: 100vh;
-        object-fit: cover !important;
-    }
-</style>
+        .fullscreen #viewer img {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
 
 <body>
 
-<h3>Галерея</h3>
+    <h3>Галерея</h3>
+    <div id="viewer"><span>Нет фото</span></div>
+    <input type="file" id="fileInput" accept="image/*" hidden multiple>
 
-<div id="viewer"><span>Нет фото</span></div>
+    <div id="controls">
+        <button onclick="pickPhotos()">Добавить фото</button>
+        <button onclick="deletePhoto()">Удалить</button>
+        <button onclick="toggleFullscreen()">Полный экран</button>
+    </div>
 
-<input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <script>
+        let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+        let index = 0;
+        let fullscreen = false;
 
-<div id="controls">
-    <button onclick="document.getElementById('fileInput').click()">Добавить фото</button>
-    <button onclick="removePhoto()">Удалить фото</button>
-    <button onclick="toggleFullscreen()">Полный экран</button>
-</div>
-
-<script>
-let images = [];
-let index = 0;
-let isFullscreen = false;
-
-if (localStorage.getItem("savedImages")) {
-    images = JSON.parse(localStorage.getItem("savedImages"));
-}
-showImage();
-
-document.getElementById("fileInput").addEventListener("change", async (e) => {
-    for (let file of e.target.files) {
-        images.push(await toBase64(file));
-    }
-    save();
-    showImage();
-});
-
-function toBase64(file) {
-    return new Promise(res => {
-        let r = new FileReader();
-        r.onload = () => res(r.result);
-        r.readAsDataURL(file);
-    });
-}
-
-function showImage() {
-    const viewer = document.getElementById("viewer");
-    viewer.innerHTML = images.length ? `<img id="photo" src="${images[index]}">` : "<span>Нет фото</span>";
-
-    if (images.length) {
-        document.getElementById("photo").onclick = next;
-    }
-}
-
-function next() {
-    index = (index + 1) % images.length;
-    showImage();
-}
-
-function removePhoto() {
-    if (!images.length) return;
-    images.splice(index, 1);
-    if (index > 0) index--;
-    save();
-    showImage();
-}
-
-function save() {
-    localStorage.setItem("savedImages", JSON.stringify(images));
-}
-
-async function toggleFullscreen() {
-    isFullscreen = !isFullscreen;
-    document.body.classList.toggle("fullscreen", isFullscreen);
-
-    const doc = document.documentElement;
-
-    if (isFullscreen) {
-        if (doc.requestFullscreen) {
-            await doc.requestFullscreen();
-        } else {
-            window.scrollTo(0, 1);
+        function pickPhotos() {
+            document.getElementById("fileInput").click();
         }
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-    }
-}
 
-// PWA Service Worker
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
-</script>
+        document.getElementById("fileInput").addEventListener("change", async (e) => {
+            for (let f of e.target.files) {
+                let base64 = await fileToBase64(f);
+                photos.push(base64);
+            }
+            save();
+            show();
+        });
+
+        function fileToBase64(file) {
+            return new Promise(res => {
+                let r = new FileReader();
+                r.onload = () => res(r.result);
+                r.readAsDataURL(file);
+            });
+        }
+
+        function show() {
+            const div = document.getElementById("viewer");
+            if (!photos.length) return div.innerHTML = "<span>Нет фото</span>";
+            div.innerHTML = `<img src="${photos[index]}" id="photo">`;
+            document.getElementById("photo").onclick = next;
+        }
+
+        function next() {
+            if (!photos.length) return;
+            index = (index + 1) % photos.length;
+            show();
+        }
+
+        function deletePhoto() {
+            if (!photos.length) return;
+            photos.splice(index, 1);
+            if (index > 0) index--;
+            save();
+            show();
+        }
+
+        function save() {
+            localStorage.setItem("photos", JSON.stringify(photos));
+        }
+
+        async function toggleFullscreen() {
+            fullscreen = !fullscreen;
+            document.body.classList.toggle("fullscreen", fullscreen);
+
+            const el = document.documentElement;
+
+            if (fullscreen) {
+                if (el.requestFullscreen) el.requestFullscreen().catch(() => 0);
+                setTimeout(() => window.scrollTo(0, 1), 300);
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => 0);
+            }
+        }
+
+        // Load first
+        show();
+
+        // Register PWA SW
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js");
+        }
+    </script>
 
 </body>
+
 </html>
