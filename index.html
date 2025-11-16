@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+
+    <!-- PWA iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Gallery">
@@ -17,26 +19,26 @@
             margin: 0;
             padding: 0;
             background: #000;
-            height: 100%;
-            width: 100%;
+            height: 100vh;
+            width: 100vw;
             overflow: hidden;
             font-family: Arial, sans-serif;
+            touch-action: manipulation;
         }
 
         h3 {
             margin: 10px 0;
-            font-size: 20px;
+            font-size: 18px;
             color: white;
-            text-align: center;
         }
 
         #viewer {
             flex: 1;
             width: 100%;
+            height: calc(100% - 70px);
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #000;
             overflow: hidden;
         }
 
@@ -45,22 +47,21 @@
             max-height: 100%;
             object-fit: contain;
             display: block;
-            background: #000;
+            background: black;
         }
 
         #controls {
             display: flex;
             justify-content: center;
-            flex-wrap: wrap;
-            background: #000;
             width: 100%;
             padding: 8px 0;
+            background: #000;
             border-top: 1px solid #222;
+            gap: 10px;
         }
 
         button {
             padding: 10px 14px;
-            margin: 5px;
             border: none;
             border-radius: 6px;
             background: #222;
@@ -69,10 +70,10 @@
             cursor: pointer;
         }
 
-        /* FULLSCREEN MODE */
+        /* FULLSCREEN TRUE MODE */
         .fullscreen h3,
         .fullscreen #controls {
-            display: none;
+            display: none !important;
         }
 
         .fullscreen #viewer {
@@ -96,87 +97,82 @@
 
     <h3>Галерея</h3>
     <div id="viewer"><span style="color:#777">Нет фото</span></div>
-
-    <input type="file" id="fileInput" accept="image/*" hidden multiple>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
     <div id="controls">
-        <button onclick="pickPhotos()">Добавить</button>
-        <button onclick="deletePhoto()">Удалить</button>
+        <button onclick="openPicker()">Добавить</button>
+        <button onclick="removePhoto()">Удалить</button>
         <button onclick="toggleFullscreen()">Полный экран</button>
     </div>
 
-    <script>
-        let photos = JSON.parse(localStorage.getItem("photos") || "[]");
-        let index = 0;
-        let fullscreen = false;
+<script>
+    let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+    let index = 0;
+    let fs = false;
 
-        function pickPhotos() {
-            document.getElementById("fileInput").click();
+    function openPicker() {
+        document.getElementById("fileInput").click();
+    }
+
+    document.getElementById("fileInput").addEventListener("change", async (e) => {
+        for (let file of e.target.files) {
+            let base64 = await toBase64(file);
+            photos.push(base64);
         }
-
-        document.getElementById("fileInput").addEventListener("change", async (e) => {
-            let newPhotos = [];
-            for (let f of e.target.files) {
-                let base64 = await fileToBase64(f);
-                newPhotos.push(base64);
-            }
-            photos = photos.concat(newPhotos);
-            save();
-            show(); // only update, no fullscreen
-        });
-
-        function fileToBase64(file) {
-            return new Promise(res => {
-                let r = new FileReader();
-                r.onload = () => res(r.result);
-                r.readAsDataURL(file);
-            });
-        }
-
-        function show() {
-            const div = document.getElementById("viewer");
-            if (!photos.length) return div.innerHTML = "<span style='color:#777'>Нет фото</span>";
-            div.innerHTML = `<img src="${photos[index]}" id="photo">`;
-            document.getElementById("photo").onclick = next;
-        }
-
-        function next() {
-            if (!photos.length) return;
-            index = (index + 1) % photos.length;
-            show();
-        }
-
-        function deletePhoto() {
-            if (!photos.length) return;
-            photos.splice(index, 1);
-            if (index > 0) index--;
-            save();
-            show();
-        }
-
-        function save() {
-            localStorage.setItem("photos", JSON.stringify(photos));
-        }
-
-        async function toggleFullscreen() {
-            fullscreen = !fullscreen;
-            document.body.classList.toggle("fullscreen", fullscreen);
-
-            if (fullscreen) {
-                if (document.documentElement.requestFullscreen)
-                    document.documentElement.requestFullscreen().catch(() => 0);
-            } else {
-                if (document.exitFullscreen)
-                    document.exitFullscreen().catch(() => 0);
-            }
-        }
-
+        save();
         show();
+        e.target.value = ""; // allows reselecting same file
+    });
 
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("service-worker.js");
+    function toBase64(file) {
+        return new Promise(res => {
+            const reader = new FileReader();
+            reader.onload = () => res(reader.result);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function show() {
+        const v = document.getElementById("viewer");
+        if (!photos.length) return v.innerHTML = "<span style='color:#777'>Нет фото</span>";
+
+        v.innerHTML = `<img src="${photos[index]}" id="img">`;
+        document.getElementById("img").onclick = next;
+    }
+
+    function next() {
+        if (!photos.length) return;
+        index = (index + 1) % photos.length;
+        show();
+    }
+
+    function removePhoto() {
+        if (!photos.length) return;
+        photos.splice(index, 1);
+        if (index > 0) index--;
+        save();
+        show();
+    }
+
+    function save() {
+        localStorage.setItem("photos", JSON.stringify(photos));
+    }
+
+    function toggleFullscreen() {
+        fs = !fs;
+        document.body.classList.toggle("fullscreen", fs);
+
+        if (fs) {
+            if (document.documentElement.requestFullscreen)
+                document.documentElement.requestFullscreen().catch(() => 0);
+        } else {
+            if (document.exitFullscreen)
+                document.exitFullscreen().catch(() => 0);
         }
-    </script>
+    }
+
+    show();
+</script>
 
 </body>
 </html>
