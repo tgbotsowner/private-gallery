@@ -3,39 +3,45 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 
-    <!-- PWA iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Gallery">
+    <meta name="theme-color" content="#000000">
 
     <title>Gallery</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000">
 
     <style>
-        html, body {
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
             margin: 0;
             padding: 0;
-            background: #000;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
+            background: black;
+            color: white;
             font-family: Arial, sans-serif;
-            touch-action: manipulation;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-top);
         }
 
         h3 {
-            margin: 10px 0;
-            font-size: 18px;
-            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 20px;
+            margin: 0;
         }
 
         #viewer {
             flex: 1;
             width: 100%;
-            height: calc(100% - 70px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -43,98 +49,89 @@
         }
 
         #viewer img {
-            max-width: 100%;
-            max-height: 100%;
+            width: 100vw;
+            height: calc(100vh - 120px);
             object-fit: contain;
-            display: block;
             background: black;
         }
 
         #controls {
+            width: 100%;
+            background: #000;
             display: flex;
             justify-content: center;
-            width: 100%;
-            padding: 8px 0;
-            background: #000;
-            border-top: 1px solid #222;
             gap: 10px;
+            padding: 10px 0 calc(10px + var(--safe-bottom));
+            border-top: 1px solid #222;
         }
 
         button {
-            padding: 10px 14px;
-            border: none;
-            border-radius: 6px;
             background: #222;
-            color: #fff;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
             font-size: 15px;
             cursor: pointer;
         }
 
-        /* FULLSCREEN TRUE MODE */
+        /* Fullscreen mode */
         .fullscreen h3,
         .fullscreen #controls {
-            display: none !important;
-        }
-
-        .fullscreen #viewer {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 9999;
+            display: none;
         }
 
         .fullscreen #viewer img {
             width: 100vw;
             height: 100vh;
-            object-fit: contain !important;
+            object-fit: contain;
         }
     </style>
 </head>
 
 <body>
 
-    <h3>Галерея</h3>
-    <div id="viewer"><span style="color:#777">Нет фото</span></div>
-    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+<h3>Галерея</h3>
 
-    <div id="controls">
-        <button onclick="openPicker()">Добавить</button>
-        <button onclick="removePhoto()">Удалить</button>
-        <button onclick="toggleFullscreen()">Полный экран</button>
-    </div>
+<div id="viewer"><span style="opacity:0.6">Нет фото</span></div>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+<div id="controls">
+    <button onclick="selectPhotos()">Добавить</button>
+    <button onclick="removePhoto()">Удалить</button>
+    <button onclick="toggleFullscreen()">Полный экран</button>
+</div>
 
 <script>
     let photos = JSON.parse(localStorage.getItem("photos") || "[]");
     let index = 0;
     let fs = false;
 
-    function openPicker() {
+    function selectPhotos() {
         document.getElementById("fileInput").click();
     }
 
     document.getElementById("fileInput").addEventListener("change", async (e) => {
-        for (let file of e.target.files) {
-            let base64 = await toBase64(file);
+        for (let f of e.target.files) {
+            let base64 = await fileToBase64(f);
             photos.push(base64);
         }
         save();
         show();
-        e.target.value = ""; // allows reselecting same file
+        e.target.value = "";
     });
 
-    function toBase64(file) {
-        return new Promise(res => {
-            const reader = new FileReader();
-            reader.onload = () => res(reader.result);
+    function fileToBase64(file) {
+        return new Promise(r => {
+            let reader = new FileReader();
+            reader.onload = () => r(reader.result);
             reader.readAsDataURL(file);
         });
     }
 
     function show() {
         const v = document.getElementById("viewer");
-        if (!photos.length) return v.innerHTML = "<span style='color:#777'>Нет фото</span>";
+        if (!photos.length) return v.innerHTML = "<span style='opacity:0.6'>Нет фото</span>";
 
         v.innerHTML = `<img src="${photos[index]}" id="img">`;
         document.getElementById("img").onclick = next;
@@ -162,13 +159,8 @@
         fs = !fs;
         document.body.classList.toggle("fullscreen", fs);
 
-        if (fs) {
-            if (document.documentElement.requestFullscreen)
-                document.documentElement.requestFullscreen().catch(() => 0);
-        } else {
-            if (document.exitFullscreen)
-                document.exitFullscreen().catch(() => 0);
-        }
+        if (fs) document.documentElement.requestFullscreen().catch(()=>{});
+        else document.exitFullscreen?.();
     }
 
     show();
