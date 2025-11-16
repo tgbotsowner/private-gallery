@@ -82,11 +82,9 @@
         }
 
         /* ОСНОВНОЕ ПРИЛОЖЕНИЕ */
-
         #app {
-            display: none; /* показываем только после ввода кода */
+            display: none;
             height: 100%;
-            display: flex;
             flex-direction: column;
         }
 
@@ -186,29 +184,17 @@
     </div>
 
     <script>
-        /* ===== НАСТРОЙКА КОДОВ =====
-           Здесь только ТЫ вручную добавляешь допустимые коды.
-           Пример: "AB12CD", "ZX98QW"
-         */
+        /* ===== Список одноразовых кодов ===== */
+
         const validCodes = [
-            "AB12CD",
-            "Q7X9PL",
-            "H2B4KM",
-            "W9T3ZA",
-            "M8F6CD",
-            "R4Y7QN",
-            "T5L2WP",
-            "Z9D8HF",
-            "B3N6VE",
-            "X7Q1JR",
-            "K2M9YS",
-            "ZX98QW"
-            // добавляй свои коды сюда
+            "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
+            "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
+            "K2M9YS","ZX98QW","PL92MX","WQ77TT","UF43PA",
+            "NS82LD","HJ55ZA","CY33RS","TR91VB","XP44QM"
         ];
 
         const ACCESS_KEY = "gallery_access_granted";
 
-        // если ранее уже введён код на этом устройстве — пускаем сразу
         if (localStorage.getItem(ACCESS_KEY) === "1") {
             showApp();
             registerSW();
@@ -231,18 +217,13 @@
                 return;
             }
 
-            // одноразовость на этом устройстве:
-            // сохраняем флаг, чтобы больше не спрашивать
-            localStorage.setItem(ACCESS_KEY, "1");
+            validCodes.splice(idx, 1); // одноразовость
 
-            // очищаем поле и ошибку
+            localStorage.setItem(ACCESS_KEY, "1");
             input.value = "";
             err.textContent = "";
 
-            // показываем приложение
             showApp();
-
-            // регистрируем SW только после успешного входа
             registerSW();
         }
 
@@ -253,7 +234,7 @@
 
         function registerSW() {
             if ("serviceWorker" in navigator) {
-                navigator.serviceWorker.register("service-worker.js").catch(() => { });
+                navigator.serviceWorker.register("service-worker.js").catch(() => {});
             }
         }
 
@@ -316,9 +297,7 @@
             document.body.classList.toggle("fullscreen", full);
         }
 
-        // отрисовать если фотки уже есть (при доступе)
         show();
     </script>
 </body>
-
 </html>
