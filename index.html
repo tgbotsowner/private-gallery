@@ -2,73 +2,75 @@
 <html lang="ru">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 
-    <!-- PWA -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Gallery">
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Gallery" />
 
     <title>Gallery</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000">
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#000" />
 
     <style>
         body {
             margin: 0;
+            padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
             background: #000;
             color: #fff;
             font-family: Arial, sans-serif;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
             overflow: hidden;
-            -webkit-touch-callout: none;
-            user-select: none;
         }
 
         h3 {
-            margin: 8px 0 6px 0;
             text-align: center;
-            font-size: 22px;
+            padding-top: env(safe-area-inset-top, 10px);
+            margin: 8px 0;
         }
 
         #viewer {
             flex: 1;
             width: 100%;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            background: #000;
+            position: relative;
         }
 
         #viewer img {
-            max-width: 100%;
-            max-height: calc(100vh - 100px);
-            object-fit: contain;
             display: block;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: none;
         }
 
         #controls {
+            background: #000;
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
+            padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
             gap: 10px;
-            background: #000;
-            padding: 10px;
         }
 
         button {
-            padding: 10px 16px;
+            background: #1c1c1c;
+            color: white;
             border: none;
-            border-radius: 8px;
-            background: #222;
-            color: #fff;
-            font-size: 15px;
-            cursor: pointer;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 16px;
         }
 
-        /* FULLSCREEN MODE */
+        /* FULLSCREEN */
         .fullscreen h3,
         .fullscreen #controls {
             display: none;
@@ -76,76 +78,78 @@
 
         .fullscreen #viewer {
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
             overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
-            background: #000;
-            z-index: 9999;
         }
 
         .fullscreen #viewer img {
             width: 100%;
             height: auto;
-            max-width: 100%;
-            margin: 0;
-            object-fit: contain;
+            max-width: none;
         }
     </style>
 </head>
 
 <body>
-
     <h3>Галерея</h3>
+
     <div id="viewer"><span>Нет фото</span></div>
-    <input type="file" id="fileInput" accept="image/*" hidden multiple>
+
+    <input type="file" id="picker" accept="image/*" hidden multiple />
 
     <div id="controls">
-        <button onclick="pickPhotos()">Добавить</button>
-        <button onclick="deletePhoto()">Удалить</button>
-        <button onclick="toggleFullscreen()">Полный экран</button>
+        <button onclick="pick()">Добавить</button>
+        <button onclick="removePhoto()">Удалить</button>
+        <button onclick="toggleFull()">На весь экран</button>
     </div>
 
     <script>
         let photos = JSON.parse(localStorage.getItem("photos") || "[]");
         let index = 0;
-        let fullscreen = false;
+        let full = false;
 
-        function pickPhotos() {
-            document.getElementById("fileInput").click();
+        function pick() {
+            document.getElementById("picker").click();
         }
 
-        document.getElementById("fileInput").addEventListener("change", async (e) => {
-            for (let f of e.target.files) {
-                let base64 = await fileToBase64(f);
+        document.getElementById("picker").addEventListener("change", async e => {
+            for (let file of e.target.files) {
+                const base64 = await toB64(file);
                 photos.push(base64);
             }
             save();
-            show();  
+            show();
         });
 
-        function fileToBase64(file) {
+        function toB64(file) {
             return new Promise(res => {
-                let r = new FileReader();
+                const r = new FileReader();
                 r.onload = () => res(r.result);
                 r.readAsDataURL(file);
             });
         }
 
         function show() {
-            const div = document.getElementById("viewer");
-            if (!photos.length) return div.innerHTML = "<span>Нет фото</span>";
-
-            div.innerHTML = `<img src="${photos[index]}" id="photo">`;
-            document.getElementById("photo").onclick = next;
+            const area = document.getElementById("viewer");
+            if (!photos.length) {
+                area.innerHTML = "<span>Нет фото</span>";
+                return;
+            }
+            area.innerHTML = `<img src="${photos[index]}" id="img">`;
+            document.getElementById("img").onclick = next;
         }
 
         function next() {
-            if (!photos.length || fullscreen) return;
             index = (index + 1) % photos.length;
             show();
         }
 
-        function deletePhoto() {
+        function removePhoto() {
             if (!photos.length) return;
             photos.splice(index, 1);
             if (index > 0) index--;
@@ -157,17 +161,9 @@
             localStorage.setItem("photos", JSON.stringify(photos));
         }
 
-        async function toggleFullscreen() {
-            fullscreen = !fullscreen;
-            document.body.classList.toggle("fullscreen", fullscreen);
-
-            const el = document.documentElement;
-
-            if (fullscreen) {
-                if (el.requestFullscreen) el.requestFullscreen().catch(() => 0);
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen().catch(() => 0);
-            }
+        function toggleFull() {
+            full = !full;
+            document.body.classList.toggle("fullscreen", full);
         }
 
         show();
@@ -176,6 +172,6 @@
             navigator.serviceWorker.register("service-worker.js");
         }
     </script>
-
 </body>
+
 </html>
