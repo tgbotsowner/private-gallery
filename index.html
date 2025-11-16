@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 
     <!-- PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,21 +15,21 @@
     <meta name="theme-color" content="#000">
 
     <style>
-        body {
+        html, body {
             margin: 0;
+            padding: 0;
             background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
+            height: 100%;
+            width: 100%;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         h3 {
             margin: 10px 0;
             font-size: 20px;
+            color: white;
+            text-align: center;
         }
 
         #viewer {
@@ -40,15 +40,14 @@
             align-items: center;
             background: #000;
             overflow: hidden;
-            position: relative;
         }
 
         #viewer img {
-            width: 100vw;
-            height: 100vh;
-            object-fit: contain !important;
-            background: black;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
             display: block;
+            background: #000;
         }
 
         #controls {
@@ -57,12 +56,12 @@
             flex-wrap: wrap;
             background: #000;
             width: 100%;
-            padding: 7px 0;
+            padding: 8px 0;
             border-top: 1px solid #222;
         }
 
         button {
-            padding: 10px 15px;
+            padding: 10px 14px;
             margin: 5px;
             border: none;
             border-radius: 6px;
@@ -81,13 +80,16 @@
         .fullscreen #viewer {
             position: fixed;
             inset: 0;
-            z-index: 9999;
+            width: 100vw;
+            height: 100vh;
             background: #000;
+            z-index: 9999;
         }
 
         .fullscreen #viewer img {
             width: 100vw;
             height: 100vh;
+            object-fit: cover !important;
         }
     </style>
 </head>
@@ -95,11 +97,11 @@
 <body>
 
     <h3>Галерея</h3>
-    <div id="viewer"><span>Нет фото</span></div>
+    <div id="viewer"><span style="color:#777">Нет фото</span></div>
     <input type="file" id="fileInput" accept="image/*" hidden multiple>
 
     <div id="controls">
-        <button onclick="pickPhotos()">Добавить фото</button>
+        <button onclick="pickPhotos()">Добавить</button>
         <button onclick="deletePhoto()">Удалить</button>
         <button onclick="toggleFullscreen()">Полный экран</button>
     </div>
@@ -132,7 +134,7 @@
 
         function show() {
             const div = document.getElementById("viewer");
-            if (!photos.length) return div.innerHTML = "<span>Нет фото</span>";
+            if (!photos.length) return div.innerHTML = "<span style='color:#777'>Нет фото</span>";
             div.innerHTML = `<img src="${photos[index]}" id="photo">`;
             document.getElementById("photo").onclick = next;
         }
@@ -163,16 +165,13 @@
 
             if (fullscreen) {
                 if (el.requestFullscreen) el.requestFullscreen().catch(() => 0);
-                setTimeout(() => window.scrollTo(0, 1), 300);
             } else {
                 if (document.exitFullscreen) document.exitFullscreen().catch(() => 0);
             }
         }
 
-        // Load first
         show();
 
-        // Register PWA SW
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("service-worker.js");
         }
