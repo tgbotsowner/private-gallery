@@ -2,181 +2,180 @@
 <html lang="ru">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-<!-- PWA -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Gallery">
+    <!-- PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Gallery">
 
-<title>Gallery</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000">
+    <title>Gallery</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000">
 
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        background: black;
-        color: white;
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-    }
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
 
-    h3 {
-        text-align: center;
-        font-size: 22px;
-        margin: 10px 0 5px;
-    }
+        h3 {
+            margin: 8px 0 6px 0;
+            text-align: center;
+            font-size: 22px;
+        }
 
-    #viewer {
-        flex: 1;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: black;
-        overflow: hidden;
-    }
+        #viewer {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
 
-    /* Standard display (not fullscreen) */
-    #viewer img {
-        width: 100%;
-        height: auto;
-        max-height: 90vh;
-        object-fit: contain;
-        display: block;
-    }
+        #viewer img {
+            max-width: 100%;
+            max-height: calc(100vh - 100px);
+            object-fit: contain;
+            display: block;
+        }
 
-    /* Fullscreen perfect fit for vertical screenshots */
-    .fullscreen #viewer img {
-        width: 100vw;
-        height: 100vh;
-        object-fit: fill !important;
-    }
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            background: #000;
+            padding: 10px;
+        }
 
-    #controls {
-        width: 100%;
-        background: black;
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px;
-        border-top: 1px solid #222;
-        position: sticky;
-        bottom: 0;
-        z-index: 10;
-    }
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+        }
 
-    button {
-        flex: 1;
-        background: #222;
-        color: white;
-        padding: 10px 14px;
-        border: none;
-        border-radius: 8px;
-        font-size: 15px;
-    }
+        /* FULLSCREEN MODE */
+        .fullscreen h3,
+        .fullscreen #controls {
+            display: none;
+        }
 
-    /* Hide UI in fullscreen */
-    .fullscreen h3,
-    .fullscreen #controls {
-        display: none;
-    }
+        .fullscreen #viewer {
+            position: fixed;
+            inset: 0;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            background: #000;
+            z-index: 9999;
+        }
 
-    .fullscreen #viewer {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background: black;
-    }
-</style>
+        .fullscreen #viewer img {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            margin: 0;
+            object-fit: contain;
+        }
+    </style>
 </head>
 
 <body>
 
-<h3>Галерея</h3>
+    <h3>Галерея</h3>
+    <div id="viewer"><span>Нет фото</span></div>
+    <input type="file" id="fileInput" accept="image/*" hidden multiple>
 
-<div id="viewer"><span style="opacity:0.5">Нет фото</span></div>
-<input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <div id="controls">
+        <button onclick="pickPhotos()">Добавить</button>
+        <button onclick="deletePhoto()">Удалить</button>
+        <button onclick="toggleFullscreen()">Полный экран</button>
+    </div>
 
-<div id="controls">
-    <button onclick="pick()">Добавить</button>
-    <button onclick="removePhoto()">Удалить</button>
-    <button onclick="toggleFull()">Полный экран</button>
-</div>
+    <script>
+        let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+        let index = 0;
+        let fullscreen = false;
 
-<script>
-let photos = JSON.parse(localStorage.getItem("photos") || "[]");
-let index = 0;
-let fs = false;
+        function pickPhotos() {
+            document.getElementById("fileInput").click();
+        }
 
-function pick() {
-    document.getElementById("fileInput").click();
-}
+        document.getElementById("fileInput").addEventListener("change", async (e) => {
+            for (let f of e.target.files) {
+                let base64 = await fileToBase64(f);
+                photos.push(base64);
+            }
+            save();
+            show();  
+        });
 
-document.getElementById("fileInput").addEventListener("change", async e => {
-    for (let f of e.target.files) {
-        photos.push(await toBase64(f));
-    }
-    save();
-    show();
-});
+        function fileToBase64(file) {
+            return new Promise(res => {
+                let r = new FileReader();
+                r.onload = () => res(r.result);
+                r.readAsDataURL(file);
+            });
+        }
 
-function toBase64(file) {
-    return new Promise(res => {
-        let r = new FileReader();
-        r.onload = () => res(r.result);
-        r.readAsDataURL(file);
-    });
-}
+        function show() {
+            const div = document.getElementById("viewer");
+            if (!photos.length) return div.innerHTML = "<span>Нет фото</span>";
 
-function show() {
-    const v = document.getElementById("viewer");
-    if (!photos.length) return v.innerHTML = "<span style='opacity:0.5'>Нет фото</span>";
-    v.innerHTML = `<img src="${photos[index]}" onclick="next()">`;
-}
+            div.innerHTML = `<img src="${photos[index]}" id="photo">`;
+            document.getElementById("photo").onclick = next;
+        }
 
-function next() {
-    index = (index + 1) % photos.length;
-    show();
-}
+        function next() {
+            if (!photos.length || fullscreen) return;
+            index = (index + 1) % photos.length;
+            show();
+        }
 
-function removePhoto() {
-    if (!photos.length) return;
-    photos.splice(index, 1);
-    if (index > 0) index--;
-    save();
-    show();
-}
+        function deletePhoto() {
+            if (!photos.length) return;
+            photos.splice(index, 1);
+            if (index > 0) index--;
+            save();
+            show();
+        }
 
-function save() {
-    localStorage.setItem("photos", JSON.stringify(photos));
-}
+        function save() {
+            localStorage.setItem("photos", JSON.stringify(photos));
+        }
 
-function toggleFull() {
-    fs = !fs;
-    document.body.classList.toggle("fullscreen", fs);
+        async function toggleFullscreen() {
+            fullscreen = !fullscreen;
+            document.body.classList.toggle("fullscreen", fullscreen);
 
-    let doc = document.documentElement;
+            const el = document.documentElement;
 
-    if (fs) {
-        if (doc.requestFullscreen) doc.requestFullscreen().catch(()=>{});
-        setTimeout(()=>window.scrollTo(0, 1), 150);
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
-    }
-}
+            if (fullscreen) {
+                if (el.requestFullscreen) el.requestFullscreen().catch(() => 0);
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => 0);
+            }
+        }
 
-show();
+        show();
 
-// Enable PWA
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
-</script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js");
+        }
+    </script>
 
 </body>
 </html>
