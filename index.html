@@ -83,14 +83,15 @@
             width: 100vw;
             height: 100vh;
             background: #000;
-            overflow-y: scroll;
+            overflow: hidden;
             -webkit-overflow-scrolling: touch;
         }
 
         .fullscreen #viewer img {
             width: 100%;
-            height: auto;
+            height: 100%;
             max-width: none;
+            object-fit: contain;
         }
     </style>
 </head>
