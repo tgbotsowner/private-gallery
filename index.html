@@ -1,164 +1,158 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
 
-<!-- важнейший meta для iPhone -->
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <!-- iPhone PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Gallery">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#000">
+    <title>Gallery</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000">
 
-<title>Галерея</title>
-<link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            -webkit-user-select: none;
+        }
 
-<style>
-    :root {
-        --safe-top: env(safe-area-inset-top);
-        --safe-bottom: env(safe-area-inset-bottom);
-    }
+        h3 {
+            margin: 5px 0 3px 0;
+            text-align: center;
+            font-size: 20px;
+        }
 
-    body {
-        margin: 0;
-        background: #000;
-        color: white;
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        overflow: hidden;
-        padding-top: var(--safe-top);
-        padding-bottom: var(--safe-bottom);
-    }
+        #viewer {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+        }
 
-    h3 {
-        text-align: center;
-        font-size: 20px;
-        margin: 5px 0 10px;
-    }
+        #viewer img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
 
-    #viewer {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-    }
+        #controls {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            background: #000;
+            border-top: 1px solid #222;
+        }
 
-    #viewer img {
-        width: 100vw;
-        height: calc(100vh - 140px);
-        object-fit: contain;
-        display: block;
-    }
+        button {
+            background: #222;
+            color: white;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+        }
 
-    #controls {
-        width: 100%;
-        padding: 8px;
-        display: flex;
-        justify-content: space-around;
-        background: #000;
-        border-top: 1px solid #333;
-        position: relative;
-        z-index: 1000;
-    }
+        /* FULLSCREEN MODE */
+        .full #controls,
+        .full h3 {
+            display: none;
+        }
 
-    button {
-        flex: 1;
-        margin: 0 5px;
-        background: #222;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 15px;
-    }
-
-    /* FULLSCREEN MODE */
-    .fullscreen h3, .fullscreen #controls {
-        display: none;
-    }
-
-    .fullscreen #viewer img {
-        width: 100vw;
-        height: 100vh;
-        object-fit: contain;
-    }
-</style>
+        .full #viewer {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+        }
+    </style>
 </head>
 
 <body>
+    <h3>Галерея</h3>
 
-<h3>Галерея</h3>
-<div id="viewer"><span>Нет фото</span></div>
+    <div id="viewer"><span>Нет фото</span></div>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
-<input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <div id="controls">
+        <button onclick="addPhotos()">Добавить</button>
+        <button onclick="removePhoto()">Удалить</button>
+        <button onclick="toggleFull()">Полный экран</button>
+    </div>
 
-<div id="controls">
-    <button onclick="openPicker()">Добавить</button>
-    <button onclick="removePhoto()">Удалить</button>
-    <button onclick="toggleFull()">Полный экран</button>
-</div>
+    <script>
+        let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+        let index = 0;
+        show();
 
-<script>
-let photos = JSON.parse(localStorage.getItem("photos") || "[]");
-let index = 0;
+        function addPhotos() {
+            document.getElementById("fileInput").click();
+        }
 
-function openPicker() {
-    document.getElementById("fileInput").click();
-}
+        document.getElementById("fileInput").addEventListener("change", async (e) => {
+            for (let f of e.target.files) {
+                photos.push(await toBase64(f));
+            }
+            save();
+            show();
+        });
 
-document.getElementById("fileInput").addEventListener("change", async e => {
-    for (let file of e.target.files) {
-        photos.push(await toBase64(file));
-    }
-    save();
-    show();
-});
+        function toBase64(file) {
+            return new Promise(res => {
+                let r = new FileReader();
+                r.onload = () => res(r.result);
+                r.readAsDataURL(file);
+            });
+        }
 
-function toBase64(file) {
-    return new Promise(res => {
-        const r = new FileReader();
-        r.onload = () => res(r.result);
-        r.readAsDataURL(file);
-    });
-}
+        function show() {
+            const box = document.getElementById("viewer");
+            if (!photos.length) return box.innerHTML = "<span>Нет фото</span>";
+            box.innerHTML = `<img src="${photos[index]}" onclick="next()">`;
+        }
 
-function show() {
-    const v = document.getElementById("viewer");
-    if (!photos.length) return v.innerHTML = "<span>Нет фото</span>";
+        function next() {
+            if (!photos.length) return;
+            index = (index + 1) % photos.length;
+            show();
+        }
 
-    v.innerHTML = `<img id='photo' src='${photos[index]}'>`;
-    document.getElementById("photo").onclick = next;
-}
+        function removePhoto() {
+            if (!photos.length) return;
+            photos.splice(index, 1);
+            if (index > 0) index--;
+            save();
+            show();
+        }
 
-function next() {
-    index = (index + 1) % photos.length;
-    show();
-}
+        function save() {
+            localStorage.setItem("photos", JSON.stringify(photos));
+        }
 
-function removePhoto() {
-    if (!photos.length) return;
-    photos.splice(index, 1);
-    if (index > 0) index--;
-    save();
-    show();
-}
+        function toggleFull() {
+            document.body.classList.toggle("full");
+        }
 
-function save() {
-    localStorage.setItem("photos", JSON.stringify(photos));
-}
-
-function toggleFull() {
-    document.body.classList.toggle("fullscreen");
-}
-
-// show on start
-show();
-
-// enable PWA
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
-</script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js");
+        }
+    </script>
 </body>
+
 </html>
