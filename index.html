@@ -7,7 +7,7 @@
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Gallery" />
 
     <title>Gallery</title>
@@ -49,7 +49,8 @@
             width: auto;
             height: auto;
             max-width: 100%;
-            max-height: none;
+            max-height: 100%;
+            object-fit: contain;
         }
 
         #controls {
@@ -68,6 +69,11 @@
             padding: 12px 18px;
             border-radius: 10px;
             font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:active {
+            background: #2c2c2c;
         }
 
         /* FULLSCREEN */
@@ -76,12 +82,18 @@
             display: none;
         }
 
+        .fullscreen body {
+            padding: 0;
+        }
+
         .fullscreen #viewer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
+            margin: 0;
+            padding: 0;
             background: #000;
             overflow: hidden;
             -webkit-overflow-scrolling: touch;
@@ -90,8 +102,17 @@
         .fullscreen #viewer img {
             width: 100%;
             height: 100%;
-            max-width: none;
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
+        }
+
+        /* Fullscreen API */
+        #viewer:fullscreen img,
+        #viewer:-webkit-full-screen img,
+        #viewer:-moz-full-screen img {
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
@@ -165,7 +186,43 @@
         function toggleFull() {
             full = !full;
             document.body.classList.toggle("fullscreen", full);
+
+            const elem = document.getElementById("viewer");
+
+            if (full) {
+                // Запрос полноэкранного режима
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => {
+                        console.log("Fullscreen error:", err);
+                    });
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                // Выход из полноэкранного режима
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
         }
+
+        // Выход из полноэкранного режима по ESC
+        document.addEventListener("fullscreenchange", () => {
+            if (!document.fullscreenElement) {
+                full = false;
+                document.body.classList.remove("fullscreen");
+            }
+        });
 
         show();
 
