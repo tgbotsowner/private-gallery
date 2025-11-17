@@ -8,8 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="apple-mobile-web-app-title" content="Gallery" />
-
-<title>Gallery</title>
+<title>Private Gallery</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#000" />
 
@@ -26,55 +25,56 @@
         overflow: hidden;
     }
 
-    /* === AUTH SCREEN === */
+    /* LOGIN SCREEN */
     #authScreen {
         position: fixed;
         inset: 0;
         background: #000;
         display: flex;
-        flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 99999;
+        flex-direction: column;
+        text-align: center;
+        z-index: 9999;
         padding: 20px;
     }
 
     #authBox {
         width: 100%;
-        max-width: 320px;
-        text-align: center;
+        max-width: 340px;
     }
 
-    #authBox input {
+    #accessCode {
         width: 100%;
         padding: 12px;
-        margin-top: 8px;
+        margin-top: 10px;
         border-radius: 10px;
-        border: 1px solid #444;
+        border: 1px solid #333;
         background: #111;
-        color: white;
+        color: #fff;
         font-size: 18px;
         text-align: center;
     }
 
     #authBox button {
-        margin-top: 12px;
         width: 100%;
+        margin-top: 12px;
         padding: 12px;
-        border: none;
         border-radius: 10px;
-        background: #13a353;
+        border: none;
+        background: #1fa553;
+        color: #fff;
         font-size: 18px;
-        color: white;
     }
 
     #authError {
         margin-top: 8px;
+        color: #ff3b3b;
         min-height: 18px;
-        color: #ff4d4d;
+        font-size: 15px;
     }
 
-    /* === APP === */
+    /* MAIN APP */
     #app {
         display: none;
         height: 100%;
@@ -83,19 +83,16 @@
 
     h3 {
         text-align: center;
-        padding-top: env(safe-area-inset-top, 8px);
         margin: 8px 0;
     }
 
     #viewer {
         flex: 1;
-        width: 100%;
-        overflow: hidden;
         display: flex;
         justify-content: center;
         align-items: center;
+        overflow: hidden;
         background: #000;
-        position: relative;
     }
 
     #viewer img {
@@ -107,24 +104,24 @@
     }
 
     #controls {
-        background: #000;
         display: flex;
         justify-content: center;
-        flex-wrap: wrap;
-        padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+        padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
         gap: 10px;
+        background: #000;
+        flex-wrap: wrap;
     }
 
     #controls button {
-        background: #1c1c1c;
-        border: none;
-        padding: 10px 16px;
-        border-radius: 10px;
+        background: #1b1b1b;
         color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
         font-size: 15px;
     }
 
-    /* === FULLSCREEN IMAGE MODE === */
+    /* FULLSCREEN */
     .fullscreen h3,
     .fullscreen #controls {
         display: none;
@@ -133,28 +130,21 @@
     .fullscreen #viewer {
         position: fixed;
         inset: 0;
-        z-index: 9999;
-        background: black;
-        overflow-y: scroll;
-        -webkit-overflow-scrolling: touch;
+        z-index: 99999;
+        background: #000;
     }
 
     .fullscreen #viewer img {
-        position: absolute;
-        top: 0;
-        left: 0;
         width: 100vw;
-        height: auto;
-        min-height: 100vh;
-        object-fit: cover;
-        object-position: top center;
+        height: 100vh;
+        object-fit: contain;
     }
 </style>
 </head>
 
 <body>
 
-<!-- AUTH STEP -->
+<!-- LOGIN -->
 <div id="authScreen">
     <div id="authBox">
         <h2>Доступ по коду</h2>
@@ -167,11 +157,8 @@
 <!-- APP -->
 <div id="app">
     <h3>Галерея</h3>
-
     <div id="viewer"><span>Нет фото</span></div>
-
     <input type="file" id="picker" accept="image/*" multiple hidden />
-
     <div id="controls">
         <button onclick="pick()">Добавить</button>
         <button onclick="removePhoto()">Удалить</button>
@@ -180,10 +167,7 @@
 </div>
 
 <script>
-/* =============================
-   ONE-TIME ACCESS CODE SYSTEM
-==============================*/
-
+/* === ONE-TIME ACCESS CODE SYSTEM === */
 const CODE_STORAGE = "validCodesDB";
 let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
@@ -201,37 +185,37 @@ let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 const ACCESS_KEY = "gallery_access_granted";
 
-/* auto-login if device already activated */
+/* DOM */
+const picker = document.getElementById("picker");
+const viewer = document.getElementById("viewer");
+
+/* Auto-login if already activated */
 if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
 
-function checkCode() {
+function checkCode(){
     const input = accessCode.value.trim().toUpperCase();
-    const errorBox = document.getElementById("authError");
-
+    const err = document.getElementById("authError");
     const idx = validCodes.indexOf(input);
 
-    if (idx === -1) {
-        errorBox.textContent = "Неверный или использованный код";
+    if(idx === -1){
+        err.textContent = "Неверный или использованный код";
         return;
     }
 
-    /* remove code permanently */
     validCodes.splice(idx, 1);
     localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
     localStorage.setItem(ACCESS_KEY, "1");
+
     showApp();
 }
 
-function showApp() {
-    document.getElementById("authScreen").style.display = "none";
-    document.getElementById("app").style.display = "flex";
+function showApp(){
+    authScreen.style.display = "none";
+    app.style.display = "flex";
+    show();
 }
 
-
-/* =============================
-   GALLERY
-==============================*/
-
+/* === GALLERY === */
 let photos = JSON.parse(localStorage.getItem("photos") || "[]");
 let index = 0;
 let full = false;
@@ -239,8 +223,8 @@ let full = false;
 function pick(){ picker.click(); }
 
 picker.addEventListener("change", async e => {
-    for (const f of e.target.files){
-        photos.push(await toB64(f));
+    for(const file of e.target.files){
+        photos.push(await toB64(file));
     }
     save();
     show();
@@ -249,20 +233,18 @@ picker.addEventListener("change", async e => {
 function toB64(file){
     return new Promise(res=>{
         const r = new FileReader();
-        r.onload=()=>res(r.result);
+        r.onload = () => res(r.result);
         r.readAsDataURL(file);
     });
 }
 
 function show(){
-    const area = document.getElementById("viewer");
-
     if(!photos.length){
-        area.innerHTML = "<span>Нет фото</span>";
+        viewer.innerHTML = "<span>Нет фото</span>";
         return;
     }
 
-    area.innerHTML = `<img src="${photos[index]}" id="img">`;
+    viewer.innerHTML = `<img src="${photos[index]}" id="img">`;
     document.getElementById("img").onclick = next;
 }
 
@@ -273,7 +255,7 @@ function next(){
 
 function removePhoto(){
     if(!photos.length) return;
-    photos.splice(index,1);
+    photos.splice(index, 1);
     if(index > 0) index--;
     save();
     show();
@@ -286,7 +268,9 @@ function toggleFull(){
 
 function save(){ localStorage.setItem("photos", JSON.stringify(photos)); }
 
+/* draw if photos exist */
 show();
 </script>
+
 </body>
 </html>
