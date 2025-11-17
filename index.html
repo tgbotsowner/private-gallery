@@ -112,13 +112,16 @@
         flex-wrap: wrap;
     }
 
-    #controls button {
+    #controls button, #controls label {
         background: #1b1b1b;
         color: #fff;
         border: none;
         padding: 10px 18px;
         border-radius: 10px;
         font-size: 15px;
+        cursor: pointer;
+        display: inline-block;
+        text-align: center;
     }
 
     /* FULLSCREEN */
@@ -158,17 +161,22 @@
 <div id="app">
     <h3>Галерея</h3>
     <div id="viewer"><span>Нет фото</span></div>
+
+    <!-- REAL FILE INPUT TRIGGER -->
     <input type="file" id="picker" accept="image/*" multiple hidden />
+
     <div id="controls">
-        <button onclick="pick()">Добавить</button>
+        <label for="picker">Добавить</label>
         <button onclick="removePhoto()">Удалить</button>
         <button onclick="toggleFull()">На весь экран</button>
     </div>
 </div>
 
 <script>
-/* === ONE-TIME ACCESS CODE SYSTEM === */
+/* === ACCESS SYSTEM === */
 const CODE_STORAGE = "validCodesDB";
+const ACCESS_KEY = "gallery_access_granted";
+
 let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
 "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
@@ -183,22 +191,17 @@ let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 ];
 
 localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
-const ACCESS_KEY = "gallery_access_granted";
 
-/* DOM */
-const picker = document.getElementById("picker");
-const viewer = document.getElementById("viewer");
-
-/* Auto-login if already activated */
 if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
 
 function checkCode(){
     const input = accessCode.value.trim().toUpperCase();
-    const err = document.getElementById("authError");
+    const error = document.getElementById("authError");
+
     const idx = validCodes.indexOf(input);
 
     if(idx === -1){
-        err.textContent = "Неверный или использованный код";
+        error.textContent = "Неверный или использованный код";
         return;
     }
 
@@ -220,11 +223,9 @@ let photos = JSON.parse(localStorage.getItem("photos") || "[]");
 let index = 0;
 let full = false;
 
-function pick(){ picker.click(); }
-
 picker.addEventListener("change", async e => {
-    for(const file of e.target.files){
-        photos.push(await toB64(file));
+    for(const f of e.target.files){
+        photos.push(await toB64(f));
     }
     save();
     show();
@@ -233,7 +234,7 @@ picker.addEventListener("change", async e => {
 function toB64(file){
     return new Promise(res=>{
         const r = new FileReader();
-        r.onload = () => res(r.result);
+        r.onload=()=>res(r.result);
         r.readAsDataURL(file);
     });
 }
@@ -255,7 +256,7 @@ function next(){
 
 function removePhoto(){
     if(!photos.length) return;
-    photos.splice(index, 1);
+    photos.splice(index,1);
     if(index > 0) index--;
     save();
     show();
@@ -268,7 +269,6 @@ function toggleFull(){
 
 function save(){ localStorage.setItem("photos", JSON.stringify(photos)); }
 
-/* draw if photos exist */
 show();
 </script>
 
