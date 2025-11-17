@@ -1,302 +1,272 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-<meta name="apple-mobile-web-app-title" content="Gallery" />
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Gallery" />
 
-<title>Private Gallery</title>
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#000" />
+    <title>Gallery</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#000" />
 
-<style>
-body {
-    margin: 0;
-    padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
-    background: #000;
-    color: #fff;
-    font-family: Arial, sans-serif;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
+    <style>
+        body {
+            margin: 0;
+            padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-/* LOGIN SCREEN */
-#authScreen {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    text-align: center;
-    z-index: 9999;
-    padding: 20px;
-}
+        /* ==== AUTH SCREEN ==== */
+        #authScreen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
 
-#authBox {
-    width: 100%;
-    max-width: 340px;
-}
+        #authBox {
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
 
-#accessCode {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 10px;
-    border: 1px solid #333;
-    background: #111;
-    color: #fff;
-    font-size: 18px;
-    text-align: center;
-}
+        #authBox input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #555;
+            background: #111;
+            color: #fff;
+            text-align: center;
+            font-size: 17px;
+        }
 
-#authBox button {
-    width: 100%;
-    margin-top: 12px;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: #1fa553;
-    color: #fff;
-    font-size: 18px;
-}
+        #authBox button {
+            margin-top: 12px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: #1f8b4c;
+            color: white;
+            font-size: 17px;
+        }
 
-#authError {
-    margin-top: 8px;
-    color: #ff3b3b;
-    min-height: 18px;
-    font-size: 15px;
-}
+        #authError {
+            margin-top: 8px;
+            color: #ff4d4d;
+            min-height: 20px;
+        }
 
-/* MAIN APP */
-#app {
-    display: none;
-    height: 100%;
-    flex-direction: column;
-}
+        /* ==== APP ==== */
+        #app {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-h3 {
-    text-align: center;
-    margin: 8px 0;
-}
+        h3 {
+            text-align: center;
+            margin: 8px 0;
+        }
 
-#viewer {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background: #000;
-}
+        #viewer {
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
 
-#viewer img {
-    width: 100vw;
-    height: calc(100vh - 110px);
-    object-fit: contain;
-    display: block;
-}
+        #viewer img {
+            max-width: 100%;
+            max-height: calc(100vh - 120px);
+            width: auto;
+            height: auto;
+        }
 
-#controls {
-    display: flex;
-    justify-content: center;
-    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-    gap: 10px;
-    background: #000;
-    flex-wrap: wrap;
-}
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+        }
 
-#controls button, #controls label {
-    background: #1b1b1b;
-    color: #fff;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-size: 15px;
-    cursor: pointer;
-}
+        #controls button {
+            background: #1c1c1c;
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #fff;
+            border: none;
+            font-size: 15px;
+        }
 
-/* FULLSCREEN */
-.fullscreen h3,
-.fullscreen #controls { display: none; }
+        /* FULLSCREEN VIEW */
+        .fullscreen h3,
+        .fullscreen #controls {
+            display: none;
+        }
 
-.fullscreen #viewer {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: #000;
-}
+        .fullscreen #viewer {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            overflow-y: scroll;
+        }
 
-.fullscreen #viewer img {
-    width: 100vw;
-    height: 100vh;
-    object-fit: contain;
-}
-</style>
+        .fullscreen #viewer img {
+            width: 100%;
+            height: auto;
+            max-width: none;
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="authScreen">
-    <div id="authBox">
-        <h2>Доступ по коду</h2>
-        <input id="accessCode" type="text" placeholder="Введите код" />
-        <button onclick="checkCode()">Войти</button>
-        <div id="authError"></div>
+    <!-- AUTH -->
+    <div id="authScreen">
+        <div id="authBox">
+            <h2>Введите доступ</h2>
+            <input id="accessCode" placeholder="Код доступа" />
+            <button onclick="checkCode()">Войти</button>
+            <div id="authError"></div>
+        </div>
     </div>
-</div>
 
-<!-- MAIN APP -->
-<div id="app">
-    <h3>Галерея</h3>
-    <div id="viewer"><span>Нет фото</span></div>
-
-    <input type="file" id="picker" accept="image/*" multiple hidden />
-
-    <div id="controls">
-        <label for="picker">Добавить</label>
-        <button onclick="removePhoto()">Удалить</button>
-        <button onclick="toggleFull()">На весь экран</button>
+    <!-- APP -->
+    <div id="app">
+        <h3>Галерея</h3>
+        <div id="viewer"><span>Нет фото</span></div>
+        <input type="file" id="picker" accept="image/*" hidden multiple>
+        <div id="controls">
+            <button onclick="pick()">Добавить</button>
+            <button onclick="removePhoto()">Удалить</button>
+            <button onclick="toggleFull()">На весь экран</button>
+        </div>
     </div>
-</div>
 
+    <script>
+        /* === One-time access codes === */
+        const ACCESS_KEY = "gallery_access_granted";
+        const CODE_STORAGE = "valid_codes";
 
-<script>
-/* === ONE-TIME ACCESS SYSTEM === */
-
-const CODE_STORAGE = "validCodesDB";
-const ACCESS_KEY = "gallery_access_granted";
-
-let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
-"AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
-"R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
-"K2M9YS","ZX98QW","PL92AB","V7C3KD","JQ55LM",
-"TR99WO","NP24QS","HF88ZX","KJ72FE","MD45CL",
-"SA71PQ","DL39WE","VM84TZ","CF28RX","YU63NB",
-"PO57AJ","GE11KV","TH44MS","WK06YD","RX73PL",
-"BN19QF","ZS82GH","KC40VM","LU55RT","AJ90XE",
-"QM81DC","PT36BW","FA67HL","ND04JQ","XV29KT",
-"HG52PA","LB88CD","MS14QW","DT95ER","FW30UX",
-"YP77SK","OV21BZ","CR68TM","JL59HQ","VE03NP"
+        let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
+    "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
+    "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
+    "K2M9YS","ZX98QW","PL92AB","V7C3KD","JQ55LM",
+    "TR99WO","NP24QS","HF88ZX","KJ72FE","MD45CL",
+    "SA71PQ","DL39WE","VM84TZ","CF28RX","YU63NB",
+    "PO57AJ","GE11KV","TH44MS","WK06YD","RX73PL",
+    "BN19QF","ZS82GH","KC40VM","LU55RT","AJ90XE",
+    "QM81DC","PT36BW","FA67HL","ND04JQ","XV29KT",
+    "HG52PA","LB88CD","MS14QW","DT95ER","FW30UX",
+    "YP77SK","OV21BZ","CR68TM","JL59HQ","VE03NP"
 ];
 
-localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
-if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
+        // If already authenticated
+        if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
 
-function checkCode(){
-    const input = accessCode.value.trim().toUpperCase();
-    const error = document.getElementById("authError");
-    const idx = validCodes.indexOf(input);
+        function checkCode() {
+            const input = document.getElementById("accessCode");
+            const err = document.getElementById("authError");
 
-    if(idx === -1){
-        error.textContent = "Неверный или использованный код";
-        return;
-    }
+            const code = (input.value || "").trim().toUpperCase();
+            if (!code) return err.textContent = "Введите код";
 
-    validCodes.splice(idx, 1);
-    localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
-    localStorage.setItem(ACCESS_KEY, "1");
+            const idx = validCodes.indexOf(code);
+            if (idx === -1) return err.textContent = "Код неверный или уже использован";
 
-    showApp();
-}
+            // ---> VALID one-time use
+            validCodes.splice(idx, 1);
+            localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+            localStorage.setItem(ACCESS_KEY, "1");
 
-function showApp(){
-    authScreen.style.display = "none";
-    app.style.display = "flex";
-    show();
-}
+            showApp();
+        }
 
+        function showApp() {
+            document.getElementById("authScreen").style.display = "none";
+            document.getElementById("app").style.display = "flex";
+        }
 
-/* === GALLERY === */
+        /* === GALLERY === */
+        let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+        let index = 0;
+        let full = false;
 
-let photos = JSON.parse(localStorage.getItem("photos") || "[]");
-let index = 0;
-let full = false;
+        function pick() {
+            picker.click();
+        }
 
-picker.addEventListener("change", async e => {
-    for (const f of e.target.files){
-        const optimized = await resizeImage(f);
-        photos.push(await fileToBase64(optimized));
-    }
-    save();
-    show();
-});
+        picker.addEventListener("change", async e => {
+            for (let f of e.target.files) {
+                const base64 = await fileToB64(f);
+                photos.push(base64);
+            }
+            save();
+            show();
+        });
 
-function resizeImage(file) {
-    const MAX_MB = 15;
-    const MAX_SIDE = 3500;
+        function fileToB64(file) {
+            return new Promise(res => {
+                const r = new FileReader();
+                r.onload = () => res(r.result);
+                r.readAsDataURL(file);
+            });
+        }
 
-    if (file.size / 1024 / 1024 <= MAX_MB) return Promise.resolve(file);
+        function show() {
+            const v = viewer;
+            if (!photos.length) return v.innerHTML = "<span>Нет фото</span>";
 
-    return new Promise(resolve => {
-        const reader = new FileReader();
-        const img = new Image();
+            v.innerHTML = `<img src="${photos[index]}" onclick="next()">`;
+        }
 
-        reader.onload = e => img.src = e.target.result;
+        function next() {
+            index = (index + 1) % photos.length;
+            show();
+        }
 
-        img.onload = () => {
-            let w = img.width, h = img.height;
-            const scale = Math.min(MAX_SIDE / w, MAX_SIDE / h);
-            w *= scale; h *= scale;
+        function removePhoto() {
+            if (!photos.length) return;
+            photos.splice(index, 1);
+            if (index > 0) index--;
+            save();
+            show();
+        }
 
-            const canvas = document.createElement("canvas");
-            canvas.width = w;
-            canvas.height = h;
-            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        function save() {
+            localStorage.setItem("photos", JSON.stringify(photos));
+        }
 
-            canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.98);
-        };
+        function toggleFull() {
+            full = !full;
+            document.body.classList.toggle("fullscreen", full);
+        }
 
-        reader.readAsDataURL(file);
-    });
-}
-
-function fileToBase64(file){
-    return new Promise(res=>{
-        const r = new FileReader();
-        r.onload = ()=>res(r.result);
-        r.readAsDataURL(file);
-    });
-}
-
-function show(){
-    if(!photos.length){
-        viewer.innerHTML = "<span>Нет фото</span>";
-        return;
-    }
-    viewer.innerHTML = `<img src="${photos[index]}" id="img">`;
-    document.getElementById("img").onclick = next;
-}
-
-function next(){
-    index = (index + 1) % photos.length;
-    show();
-}
-
-function removePhoto(){
-    if(!photos.length) return;
-    photos.splice(index,1);
-    if(index>0) index--;
-    save();
-    show();
-}
-
-function toggleFull(){
-    full = !full;
-    document.body.classList.toggle("fullscreen", full);
-}
-
-function save(){ localStorage.setItem("photos", JSON.stringify(photos)); }
-
-show();
-</script>
+        show();
+    </script>
 
 </body>
 </html>
