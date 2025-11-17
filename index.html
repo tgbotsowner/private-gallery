@@ -2,141 +2,141 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="apple-mobile-web-app-title" content="Gallery" />
+
 <title>Private Gallery</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#000" />
 
 <style>
-    body {
-        margin: 0;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-        background: #000;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
+body {
+    margin: 0;
+    padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
 
-    /* LOGIN */
-    #authScreen {
-        position: fixed;
-        inset: 0;
-        background: #000;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 2000;
-        padding: 20px;
-        text-align: center;
-    }
+/* LOGIN SCREEN */
+#authScreen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    z-index: 9999;
+    padding: 20px;
+}
 
-    #authBox {
-        width: 90%;
-        max-width: 330px;
-    }
+#authBox {
+    width: 100%;
+    max-width: 340px;
+}
 
-    #accessCode {
-        width: 100%;
-        padding: 14px;
-        margin-top: 12px;
-        border-radius: 12px;
-        border: 1px solid #444;
-        background: #111;
-        color: white;
-        font-size: 18px;
-        text-align: center;
-    }
+#accessCode {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #111;
+    color: #fff;
+    font-size: 18px;
+    text-align: center;
+}
 
-    #authBox button {
-        margin-top: 14px;
-        width: 100%;
-        padding: 14px;
-        border-radius: 12px;
-        border: none;
-        font-size: 18px;
-        background: #1fa553;
-        color: #fff;
-    }
+#authBox button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #1fa553;
+    color: #fff;
+    font-size: 18px;
+}
 
-    #authError {
-        margin-top: 8px;
-        color: #ff4747;
-        min-height: 20px;
-    }
+#authError {
+    margin-top: 8px;
+    color: #ff3b3b;
+    min-height: 18px;
+    font-size: 15px;
+}
 
-    /* APP */
-    #app {
-        display: none;
-        height: 100%;
-        flex-direction: column;
-        width: 100%;
-    }
+/* MAIN APP */
+#app {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+}
 
-    #viewer {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-        background: #000;
-    }
+h3 {
+    text-align: center;
+    margin: 8px 0;
+}
 
-    #viewer img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
+#viewer {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: #000;
+}
 
-    #controls {
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        padding: 12px;
-        background: #000;
-    }
+#viewer img {
+    width: 100vw;
+    height: calc(100vh - 110px);
+    object-fit: contain;
+    display: block;
+}
 
-    #controls button, #controls label {
-        padding: 10px 18px;
-        border-radius: 10px;
-        border: none;
-        background: #1c1c1c;
-        color: white;
-        font-size: 15px;
-    }
+#controls {
+    display: flex;
+    justify-content: center;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    gap: 10px;
+    background: #000;
+    flex-wrap: wrap;
+}
 
-    input[type="file"] {
-        display: none;
-    }
+#controls button, #controls label {
+    background: #1b1b1b;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+}
 
-    /* FULLSCREEN */
-    .fullscreen #controls, .fullscreen h3 {
-        display: none;
-    }
-    .fullscreen #viewer {
-        position: fixed;
-        inset: 0;
-        background: #000;
-        z-index: 3000;
-    }
-    .fullscreen #viewer img {
-        width: 100vw;
-        height: 100vh;
-        object-fit: contain;
-    }
+/* FULLSCREEN */
+.fullscreen h3,
+.fullscreen #controls { display: none; }
 
-    #loader {
-        position: absolute;
-        bottom: 80px;
-        font-size: 14px;
-        opacity: 0.7;
-    }
+.fullscreen #viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #000;
+}
+
+.fullscreen #viewer img {
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+}
 </style>
 </head>
 
@@ -152,13 +152,12 @@
     </div>
 </div>
 
-<!-- APP -->
+<!-- MAIN APP -->
 <div id="app">
-    <h3 style="text-align:center; margin:10px 0;">Галерея</h3>
+    <h3>Галерея</h3>
     <div id="viewer"><span>Нет фото</span></div>
-    <div id="loader" style="display:none;">Загрузка...</div>
 
-    <input type="file" id="picker" accept="image/*" multiple />
+    <input type="file" id="picker" accept="image/*" multiple hidden />
 
     <div id="controls">
         <label for="picker">Добавить</label>
@@ -167,12 +166,14 @@
     </div>
 </div>
 
+
 <script>
-/* === ACCESS SYSTEM (ONE–TIME) === */
-const CODE_KEY = "validCodesDB";
+/* === ONE-TIME ACCESS SYSTEM === */
+
+const CODE_STORAGE = "validCodesDB";
 const ACCESS_KEY = "gallery_access_granted";
 
-let codes = JSON.parse(localStorage.getItem(CODE_KEY)) || [
+let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
 "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
 "K2M9YS","ZX98QW","PL92AB","V7C3KD","JQ55LM",
@@ -184,126 +185,107 @@ let codes = JSON.parse(localStorage.getItem(CODE_KEY)) || [
 "HG52PA","LB88CD","MS14QW","DT95ER","FW30UX",
 "YP77SK","OV21BZ","CR68TM","JL59HQ","VE03NP"
 ];
-localStorage.setItem(CODE_KEY, JSON.stringify(codes));
 
-if(localStorage.getItem(ACCESS_KEY)==="1") showApp();
+localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+
+if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
 
 function checkCode(){
-    const code = accessCode.value.trim().toUpperCase();
-    const err = document.getElementById("authError");
+    const input = accessCode.value.trim().toUpperCase();
+    const error = document.getElementById("authError");
+    const idx = validCodes.indexOf(input);
 
-    const idx = codes.indexOf(code);
     if(idx === -1){
-        err.textContent = "Неверный или использованный код";
+        error.textContent = "Неверный или использованный код";
         return;
     }
 
-    codes.splice(idx,1);
-    localStorage.setItem(CODE_KEY, JSON.stringify(codes));
-    localStorage.setItem(ACCESS_KEY,"1");
+    validCodes.splice(idx, 1);
+    localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+    localStorage.setItem(ACCESS_KEY, "1");
+
     showApp();
 }
 
 function showApp(){
-    authScreen.style.display="none";
-    app.style.display="flex";
-    loadPhotos();
+    authScreen.style.display = "none";
+    app.style.display = "flex";
+    show();
 }
 
-/* === INDEXED DB STORAGE === */
-let db;
-let photos = [];
+
+/* === GALLERY === */
+
+let photos = JSON.parse(localStorage.getItem("photos") || "[]");
 let index = 0;
 let full = false;
 
-const request = indexedDB.open("PrivateGalleryDB",1);
-
-request.onupgradeneeded = e => {
-    db = e.target.result;
-    db.createObjectStore("photos",{autoIncrement:true});
-};
-
-request.onsuccess = e => {
-    db = e.target.result;
-    loadPhotos();
-};
-
-function savePhoto(blob){
-    const tx = db.transaction("photos","readwrite");
-    tx.objectStore("photos").add(blob);
-    tx.oncomplete = ()=> loadPhotos();
-}
-
-function deletePhoto(){
-    const tx = db.transaction("photos","readwrite");
-    const store = tx.objectStore("photos");
-    store.delete(photos[index].id);
-    tx.oncomplete = ()=> loadPhotos();
-}
-
-/* === GALLERY === */
-picker.addEventListener("change", async e=>{
-    loader.style.display="block";
-    for(const file of e.target.files){
-        savePhoto(await resizeBlob(file));
+picker.addEventListener("change", async e => {
+    for (const f of e.target.files){
+        const optimized = await resizeImage(f);
+        photos.push(await fileToBase64(optimized));
     }
-    loader.style.display="none";
+    save();
+    show();
 });
 
-function loadPhotos(){
-    const tx = db.transaction("photos","readonly");
-    const store = tx.objectStore("photos");
-    const req = store.getAll();
-    req.onsuccess = ()=>{
-        photos = req.result.map((blob,i)=>({id:i+1,blob}));
-        if(index>=photos.length) index = photos.length-1;
-        draw();
-    };
-}
+function resizeImage(file) {
+    const MAX_MB = 15;
+    const MAX_SIDE = 3500;
 
-function draw(){
-    if(!photos.length){
-        viewer.innerHTML="<span>Нет фото</span>";
-        return;
-    }
+    if (file.size / 1024 / 1024 <= MAX_MB) return Promise.resolve(file);
 
-    const url = URL.createObjectURL(photos[index].blob);
-    viewer.innerHTML = `<img src="${url}" />`;
-}
-
-function resizeBlob(file){
-    return new Promise(res=>{
-        const img = new Image();
+    return new Promise(resolve => {
         const reader = new FileReader();
-        reader.onload = ()=> {
-            img.src = reader.result;
-            img.onload = ()=>{
-                const canvas = document.createElement("canvas");
-                const maxSize = 2000;
-                let {width, height} = img;
-                if(width > maxSize || height > maxSize){
-                    const scale = Math.min(maxSize/width, maxSize/height);
-                    width *= scale; height *= scale;
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img,0,0,width,height);
-                canvas.toBlob(res,"image/jpeg",0.9);
-            }
-        }
+        const img = new Image();
+
+        reader.onload = e => img.src = e.target.result;
+
+        img.onload = () => {
+            let w = img.width, h = img.height;
+            const scale = Math.min(MAX_SIDE / w, MAX_SIDE / h);
+            w *= scale; h *= scale;
+
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+
+            canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.98);
+        };
+
         reader.readAsDataURL(file);
     });
 }
 
+function fileToBase64(file){
+    return new Promise(res=>{
+        const r = new FileReader();
+        r.onload = ()=>res(r.result);
+        r.readAsDataURL(file);
+    });
+}
+
+function show(){
+    if(!photos.length){
+        viewer.innerHTML = "<span>Нет фото</span>";
+        return;
+    }
+    viewer.innerHTML = `<img src="${photos[index]}" id="img">`;
+    document.getElementById("img").onclick = next;
+}
+
 function next(){
-    index = (index+1)%photos.length;
-    draw();
+    index = (index + 1) % photos.length;
+    show();
 }
 
 function removePhoto(){
     if(!photos.length) return;
-    deletePhoto();
+    photos.splice(index,1);
+    if(index>0) index--;
+    save();
+    show();
 }
 
 function toggleFull(){
@@ -311,8 +293,9 @@ function toggleFull(){
     document.body.classList.toggle("fullscreen", full);
 }
 
-/* swipe */
-viewer.addEventListener("click",next);
+function save(){ localStorage.setItem("photos", JSON.stringify(photos)); }
+
+show();
 </script>
 
 </body>
