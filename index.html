@@ -171,6 +171,10 @@ h3 {
 const CODE_STORAGE = "validCodesDB";
 const ACCESS_KEY = "gallery_access_granted";
 
+/* FIX — missing DOM bindings */
+const picker = document.getElementById("picker");
+const viewer = document.getElementById("viewer");
+
 let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
 "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
@@ -212,6 +216,7 @@ function showApp(){
 }
 
 /* === GALLERY === */
+
 let photos = JSON.parse(localStorage.getItem("photos") || "[]");
 let index = 0;
 let full = false;
