@@ -1,179 +1,188 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 
-    <!-- iOS PWA -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="apple-mobile-web-app-title" content="Gallery" />
-    <title>Gallery</title>
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#000" />
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="Gallery" />
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
-            background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+<title>Gallery</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#000" />
 
-        /* === LOGIN SCREEN === */
-        #authScreen {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            padding: 20px;
-        }
+<style>
+    body {
+        margin: 0;
+        padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
 
-        #authBox {
-            width: 100%;
-            max-width: 320px;
-            text-align: center;
-        }
+    /* === AUTH SCREEN === */
+    #authScreen {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        padding: 20px;
+    }
 
-        #authScreen input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            border-radius: 10px;
-            border: 1px solid #444;
-            background: #111;
-            color: white;
-            font-size: 18px;
-            text-align: center;
-        }
+    #authBox {
+        width: 100%;
+        max-width: 320px;
+        text-align: center;
+    }
 
-        #authScreen button {
-            margin-top: 12px;
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: none;
-            background: #1fa553;
-            color: white;
-            font-size: 17px;
-        }
+    #authBox input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        border-radius: 10px;
+        border: 1px solid #444;
+        background: #111;
+        color: white;
+        font-size: 18px;
+        text-align: center;
+    }
 
-        #authError {
-            margin-top: 8px;
-            min-height: 20px;
-            color: #ff4d4d;
-        }
+    #authBox button {
+        margin-top: 12px;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        background: #13a353;
+        font-size: 18px;
+        color: white;
+    }
 
-        /* === APP AREA === */
-        #app {
-            display: none;
-            height: 100%;
-            flex-direction: column;
-        }
+    #authError {
+        margin-top: 8px;
+        min-height: 18px;
+        color: #ff4d4d;
+    }
 
-        h3 {
-            text-align: center;
-            padding-top: env(safe-area-inset-top, 10px);
-            margin: 10px 0;
-        }
+    /* === APP === */
+    #app {
+        display: none;
+        height: 100%;
+        flex-direction: column;
+    }
 
-        #viewer {
-            flex: 1;
-            width: 100%;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
-            position: relative;
-        }
+    h3 {
+        text-align: center;
+        padding-top: env(safe-area-inset-top, 8px);
+        margin: 8px 0;
+    }
 
-        #viewer img {
-            max-width: 100%;
-            max-height: calc(100vh - 120px);
-            width: auto;
-            height: auto;
-        }
+    #viewer {
+        flex: 1;
+        width: 100%;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+        position: relative;
+    }
 
-        #controls {
-            background: #000;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
-            gap: 10px;
-        }
+    #viewer img {
+        max-width: 100%;
+        max-height: calc(100vh - 120px);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
 
-        #controls button {
-            background: #1c1c1c;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 15px;
-        }
+    #controls {
+        background: #000;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+        gap: 10px;
+    }
 
-        /* === FULLSCREEN MODE === */
-        .fullscreen h3,
-        .fullscreen #controls {
-            display: none;
-        }
+    #controls button {
+        background: #1c1c1c;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 15px;
+    }
 
-        .fullscreen #viewer {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: black;
-            overflow: hidden;
-        }
+    /* === FULLSCREEN IMAGE MODE === */
+    .fullscreen h3,
+    .fullscreen #controls {
+        display: none;
+    }
 
-        .fullscreen #viewer img {
-            position: absolute;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            background: black;
-            object-fit: contain;
-        }
-    </style>
+    .fullscreen #viewer {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: black;
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fullscreen #viewer img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: auto;
+        min-height: 100vh;
+        object-fit: cover;
+        object-position: top center;
+    }
+</style>
 </head>
 
 <body>
 
-    <!-- LOGIN -->
-    <div id="authScreen">
-        <div id="authBox">
-            <h2>Доступ по коду</h2>
-            <input id="accessCode" type="text" placeholder="Введите код" autocomplete="off" />
-            <button onclick="checkCode()">Войти</button>
-            <div id="authError"></div>
-        </div>
+<!-- AUTH STEP -->
+<div id="authScreen">
+    <div id="authBox">
+        <h2>Доступ по коду</h2>
+        <input id="accessCode" type="text" placeholder="Введите код" autocomplete="off" />
+        <button onclick="checkCode()">Войти</button>
+        <div id="authError"></div>
     </div>
+</div>
 
-    <!-- APP -->
-    <div id="app">
-        <h3>Галерея</h3>
-        <div id="viewer"><span>Нет фото</span></div>
-        <input type="file" id="picker" accept="image/*" multiple hidden />
-        <div id="controls">
-            <button onclick="pick()">Добавить</button>
-            <button onclick="removePhoto()">Удалить</button>
-            <button onclick="toggleFull()">На весь экран</button>
-        </div>
+<!-- APP -->
+<div id="app">
+    <h3>Галерея</h3>
+
+    <div id="viewer"><span>Нет фото</span></div>
+
+    <input type="file" id="picker" accept="image/*" multiple hidden />
+
+    <div id="controls">
+        <button onclick="pick()">Добавить</button>
+        <button onclick="removePhoto()">Удалить</button>
+        <button onclick="toggleFull()">На весь экран</button>
     </div>
+</div>
 
 <script>
-/* === ACCESS CODE SYSTEM (ONE-TIME) === */
+/* =============================
+   ONE-TIME ACCESS CODE SYSTEM
+==============================*/
 
 const CODE_STORAGE = "validCodesDB";
 let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
@@ -192,32 +201,37 @@ let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 const ACCESS_KEY = "gallery_access_granted";
 
+/* auto-login if device already activated */
 if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
 
-function checkCode(){
+function checkCode() {
     const input = accessCode.value.trim().toUpperCase();
     const errorBox = document.getElementById("authError");
 
     const idx = validCodes.indexOf(input);
 
-    if(idx === -1){
+    if (idx === -1) {
         errorBox.textContent = "Неверный или использованный код";
         return;
     }
 
+    /* remove code permanently */
     validCodes.splice(idx, 1);
     localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
     localStorage.setItem(ACCESS_KEY, "1");
-
     showApp();
 }
 
-function showApp(){
-    authScreen.style.display = "none";
-    app.style.display = "flex";
+function showApp() {
+    document.getElementById("authScreen").style.display = "none";
+    document.getElementById("app").style.display = "flex";
 }
 
-/* === GALLERY === */
+
+/* =============================
+   GALLERY
+==============================*/
+
 let photos = JSON.parse(localStorage.getItem("photos") || "[]");
 let index = 0;
 let full = false;
@@ -225,8 +239,8 @@ let full = false;
 function pick(){ picker.click(); }
 
 picker.addEventListener("change", async e => {
-    for (const file of e.target.files){
-        photos.push(await toB64(file));
+    for (const f of e.target.files){
+        photos.push(await toB64(f));
     }
     save();
     show();
@@ -235,7 +249,7 @@ picker.addEventListener("change", async e => {
 function toB64(file){
     return new Promise(res=>{
         const r = new FileReader();
-        r.onload=() => res(r.result);
+        r.onload=()=>res(r.result);
         r.readAsDataURL(file);
     });
 }
@@ -249,18 +263,7 @@ function show(){
     }
 
     area.innerHTML = `<img src="${photos[index]}" id="img">`;
-
-    const img = document.getElementById("img");
-    img.onload = () => adaptImage(img);
-    img.onclick = next;
-}
-
-function adaptImage(img){
-    const screenRatio = window.innerWidth / window.innerHeight;
-    const imgRatio = img.naturalWidth / img.naturalHeight;
-
-    if (imgRatio > screenRatio) img.style.objectFit = "contain";
-    else img.style.objectFit = "cover";
+    document.getElementById("img").onclick = next;
 }
 
 function next(){
