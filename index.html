@@ -11,6 +11,7 @@
 
   <style>
     :root {
+      /* логический размер экрана по умолчанию (например, iPhone 14) */
       --device-width: 390;
       --device-height: 844;
     }
@@ -30,6 +31,8 @@
       margin: 10px 0;
     }
 
+    /* ---------- ЭКРАН ВВОДА КОДА ---------- */
+
     #authScreen {
       position: fixed;
       inset: 0;
@@ -42,7 +45,11 @@
       z-index: 1000;
     }
 
-    #authBox { width: 100%; max-width: 340px; text-align: center; }
+    #authBox {
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+    }
 
     #authBox input {
       width: 100%;
@@ -74,6 +81,8 @@
       min-height: 18px;
       font-size: 14px;
     }
+
+    /* ---------- ЭКРАН ВЫБОРА УСТРОЙСТВА ---------- */
 
     #deviceScreen {
       position: fixed;
@@ -113,7 +122,9 @@
       font-size: 15px;
     }
 
-    .device-item input { margin-right: 10px; }
+    .device-item input {
+      margin-right: 10px;
+    }
 
     #deviceButtons {
       padding-top: 10px;
@@ -131,8 +142,17 @@
       font-size: 16px;
     }
 
-    #deviceButtons .primary { background: #1fa553; color: #fff; }
-    #deviceButtons .secondary { background: #222; color: #fff; }
+    #deviceButtons .primary {
+      background: #1fa553;
+      color: #fff;
+    }
+
+    #deviceButtons .secondary {
+      background: #222;
+      color: #fff;
+    }
+
+    /* ---------- ОСНОВНОЕ ПРИЛОЖЕНИЕ ---------- */
 
     #app {
       display: none;
@@ -145,7 +165,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: auto;
+      overflow: auto; /* scroll для длинных скринов */
       background: #000;
     }
 
@@ -155,7 +175,10 @@
       display: block;
     }
 
-    #viewer span { color: #aaa; font-size: 16px; }
+    #viewer span {
+      color: #aaa;
+      font-size: 16px;
+    }
 
     #controls {
       display: flex;
@@ -176,30 +199,31 @@
       cursor: pointer;
     }
 
-    /* ================= FULLSCREEN MODE ================= */
+    /* ---------- FULLSCREEN MODE (через класс на body) ---------- */
 
-    #viewer.fullscreen-active {
+    body.fullscreen-mode h3,
+    body.fullscreen-mode #controls {
+      display: none !important;
+    }
+
+    body.fullscreen-mode #viewer {
       position: fixed !important;
       inset: 0 !important;
       z-index: 9999 !important;
       background: #000 !important;
+      overflow: hidden !important;
     }
 
-    #viewer.fullscreen-active img {
+    body.fullscreen-mode #viewer img {
       width: 100vw !important;
       height: 100vh !important;
       object-fit: contain !important;
-    }
-
-    #viewer.fullscreen-active + #controls,
-    #app.fullscreen-hide h3 {
-      display: none !important;
     }
   </style>
 </head>
 <body>
 
-  <!-- AUTH -->
+  <!-- ЭКРАН ДОСТУПА ПО КОДУ -->
   <div id="authScreen">
     <div id="authBox">
       <h2>Доступ по коду</h2>
@@ -209,7 +233,7 @@
     </div>
   </div>
 
-  <!-- DEVICE SELECT -->
+  <!-- ЭКРАН ВЫБОРА УСТРОЙСТВА -->
   <div id="deviceScreen">
     <h2 style="text-align:center;margin:8px 0 0 0;">Выберите ваш iPhone</h2>
     <div id="deviceList"></div>
@@ -218,13 +242,13 @@
     </div>
   </div>
 
-  <!-- GALLERY -->
+  <!-- ГАЛЕРЕЯ -->
   <div id="app">
     <h3>Галерея</h3>
     <div id="viewer"><span>Нет фото</span></div>
 
-    <!-- input создаём динамически -->
-    
+    <!-- input создаём динамически через JS -->
+
     <div id="controls">
       <button onclick="pick()">Добавить</button>
       <button onclick="toggleFullScreen()">На весь экран</button>
@@ -234,32 +258,81 @@
   </div>
 
 <script>
-/* ====================== ACCESS CODES ====================== */
+/* ===================== КОНСТАНТЫ ДОСТУПА ===================== */
 
-const CODE_STORAGE = "validCodesDB";
-const ACCESS_KEY  = "gallery_access_granted";
-const DEVICE_KEY  = "gallery_device_model";
+const CODE_STORAGE  = "validCodesDB";
+const USED_CODES_STORAGE = "usedCodesDB";
+const ACCESS_KEY   = "gallery_access_granted";
+const DEVICE_KEY   = "gallery_device_model";
+const PHOTOS_KEY   = "gallery_photos_v1";
 
-let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [];
+/* ===== КОДЫ ДОСТУПА (одноразовые) ===== */
+const INITIAL_CODES = [
+  "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
+  "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
+  "K2M9YS","ZX98QW","PL92AB","V7C3KD","JQ55LM",
+  "TR99WO","NP24QS","HF88ZX","KJ72FE","MD45CL",
+  "SA71PQ","DL39WE","VM84TZ","CF28RX","YU63NB",
+  "PO57AJ","GE11KV","TH44MS","WK06YD","RX73PL",
+  "BN19QF","ZS82GH","KC40VM","LU55RT","AJ90XE",
+  "QM81DC","PT36BW","FA67HL","ND04JQ","XV29KT",
+  "HG52PA","LB88CD","MS14QW","DT95ER","FW30UX",
+  "YP77SK","OV21BZ","CR68TM","JL59HQ","VE03NP"
+];
 
+let validCodes;
+let usedCodes;
+
+try {
+  const stored = localStorage.getItem(CODE_STORAGE);
+  validCodes = stored ? JSON.parse(stored) : [...INITIAL_CODES];
+} catch(e) {
+  validCodes = [...INITIAL_CODES];
+}
 localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
-/* ======================= DEVICES ======================= */
+try {
+  usedCodes = JSON.parse(localStorage.getItem(USED_CODES_STORAGE) || "[]");
+} catch(e) {
+  usedCodes = [];
+}
+
+/* ======================== УСТРОЙСТВА ======================== */
 
 const DEVICES = [
-  { group:"iPhone 11", items:[{id:"iphone11",name:"iPhone 11",cssW:414,cssH:896},{id:"iphone11pro",name:"iPhone 11 Pro",cssW:375,cssH:812},{id:"iphone11promax",name:"iPhone 11 Pro Max",cssW:414,cssH:896}] },
-  { group:"iPhone 12", items:[{id:"iphone12",name:"iPhone 12",cssW:390,cssH:844},{id:"iphone12pro",name:"iPhone 12 Pro",cssW:390,cssH:844},{id:"iphone12promax",name:"iPhone 12 Pro Max",cssW:428,cssH:926}] },
-  { group:"iPhone 13", items:[{id:"iphone13",name:"iPhone 13",cssW:390,cssH:844},{id:"iphone13pro",name:"iPhone 13 Pro",cssW:390,cssH:844},{id:"iphone13promax",name:"iPhone 13 Pro Max",cssW:428,cssH:926}] },
-  { group:"iPhone 14", items:[{id:"iphone14",name:"iPhone 14",cssW:390,cssH:844},{id:"iphone14plus",name:"iPhone 14 Plus",cssW:428,cssH:926},{id:"iphone14pro",name:"iPhone 14 Pro",cssW:393,cssH:852},{id:"iphone14promax",name:"iPhone 14 Pro Max",cssW:430,cssH:932}] },
-  { group:"iPhone 15", items:[{id:"iphone15",name:"iPhone 15",cssW:393,cssH:852},{id:"iphone15plus",name:"iPhone 15 Plus",cssW:430,cssH:932},{id:"iphone15pro",name:"IPhone 15 Pro",cssW:393,cssH:852},{id:"iphone15promax",name:"IPhone 15 Pro Max",cssW:430,cssH:932}] },
-
-  /* iPhone 16 */
+  { group:"iPhone 11", items:[
+    {id:"iphone11",       name:"iPhone 11",        cssW:414, cssH:896},
+    {id:"iphone11pro",    name:"iPhone 11 Pro",    cssW:375, cssH:812},
+    {id:"iphone11promax", name:"iPhone 11 Pro Max",cssW:414, cssH:896},
+  ]},
+  { group:"iPhone 12", items:[
+    {id:"iphone12",       name:"iPhone 12",        cssW:390, cssH:844},
+    {id:"iphone12pro",    name:"iPhone 12 Pro",    cssW:390, cssH:844},
+    {id:"iphone12promax", name:"iPhone 12 Pro Max",cssW:428, cssH:926},
+  ]},
+  { group:"iPhone 13", items:[
+    {id:"iphone13",       name:"iPhone 13",        cssW:390, cssH:844},
+    {id:"iphone13pro",    name:"iPhone 13 Pro",    cssW:390, cssH:844},
+    {id:"iphone13promax", name:"iPhone 13 Pro Max",cssW:428, cssH:926},
+  ]},
+  { group:"iPhone 14", items:[
+    {id:"iphone14",       name:"iPhone 14",        cssW:390, cssH:844},
+    {id:"iphone14plus",   name:"iPhone 14 Plus",   cssW:428, cssH:926},
+    {id:"iphone14pro",    name:"iPhone 14 Pro",    cssW:393, cssH:852},
+    {id:"iphone14promax", name:"iPhone 14 Pro Max",cssW:430, cssH:932},
+  ]},
+  { group:"iPhone 15", items:[
+    {id:"iphone15",       name:"iPhone 15",        cssW:393, cssH:852},
+    {id:"iphone15plus",   name:"iPhone 15 Plus",   cssW:430, cssH:932},
+    {id:"iphone15pro",    name:"iPhone 15 Pro",    cssW:393, cssH:852},
+    {id:"iphone15promax", name:"iPhone 15 Pro Max",cssW:430, cssH:932},
+  ]},
   { group:"iPhone 16", items:[
-    { id:"iphone16", name:"iPhone 16", cssW:393, cssH:852 },
-    { id:"iphone16plus", name:"iPhone 16 Plus", cssW:430, cssH:932 },
-    { id:"iphone16pro", name:"iPhone 16 Pro", cssW:402, cssH:874 },
-    { id:"iphone16promax", name:"iPhone 16 Pro Max", cssW:442, cssH:960 }
-  ]}
+    {id:"iphone16",       name:"iPhone 16",        cssW:393, cssH:852},
+    {id:"iphone16plus",   name:"iPhone 16 Plus",   cssW:430, cssH:932},
+    {id:"iphone16pro",    name:"iPhone 16 Pro",    cssW:402, cssH:874},
+    {id:"iphone16promax", name:"iPhone 16 Pro Max",cssW:442, cssH:960},
+  ]},
 ];
 
 function renderDeviceList() {
@@ -270,10 +343,17 @@ function renderDeviceList() {
     title.className = "device-group-title";
     title.textContent = group.group;
     list.appendChild(title);
+
     group.items.forEach(dev => {
       const row = document.createElement("label");
       row.className = "device-item";
-      row.innerHTML = `<span><input type="radio" name="device" value="${dev.id}">${dev.name}</span><span style="opacity:.5;font-size:12px;">${dev.cssW}×${dev.cssH}</span>`;
+      row.innerHTML = `
+        <span>
+          <input type="radio" name="device" value="${dev.id}">
+          ${dev.name}
+        </span>
+        <span style="opacity:.5;font-size:12px;">${dev.cssW}×${dev.cssH}</span>
+      `;
       list.appendChild(row);
     });
   });
@@ -291,26 +371,112 @@ function applyDevice(id) {
   }
 }
 
-/* =================== AUTH LOGIC =================== */
+/* ======================== ФОТО (localStorage) ======================== */
+
+let photos = [];        // массив dataURL
+let indexPhoto = 0;
+
+function loadPhotos() {
+  try {
+    const raw = localStorage.getItem(PHOTOS_KEY);
+    photos = raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    photos = [];
+  }
+}
+
+function savePhotos() {
+  try {
+    localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos));
+  } catch(e) {
+    // если localStorage забит — просто молча игнорим
+  }
+}
+
+function readAndResize(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_SIDE = 2048; // лёгкая оптимизация, без потери видимого качества
+        let w = img.width;
+        let h = img.height;
+        const maxSide = Math.max(w, h);
+
+        if (maxSide <= MAX_SIDE) {
+          return resolve(e.target.result); // оригинал в base64
+        }
+
+        const scale = MAX_SIDE / maxSide;
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+        resolve(dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function addPhotoFromFile(file) {
+  readAndResize(file).then(dataUrl => {
+    if (!dataUrl) return;
+    if (photos.length >= 2) {
+      // максимум 2 фото — удаляем самое старое
+      photos.shift();
+    }
+    photos.push(dataUrl);
+    indexPhoto = photos.length - 1;
+    savePhotos();
+    show();
+  });
+}
+
+/* ======================== AUTH ЛОГИКА ======================== */
+
+loadPhotos(); // сразу пытаемся загрузить локальные фото
 
 if (localStorage.getItem(ACCESS_KEY) === "1") {
   document.getElementById("authScreen").style.display = "none";
   const savedDevice = localStorage.getItem(DEVICE_KEY);
-  if (savedDevice) { applyDevice(savedDevice); startApp(); }
-  else showDeviceScreen();
+  if (savedDevice) {
+    applyDevice(savedDevice);
+    startApp();
+  } else {
+    showDeviceScreen();
+  }
 }
 
 function checkCode() {
   const val = document.getElementById("accessCode").value.trim().toUpperCase();
   const err = document.getElementById("authError");
 
-  if (!val) return err.textContent = "Введите код";
+  if (!val) {
+    err.textContent = "Введите код";
+    return;
+  }
 
   const idx = validCodes.indexOf(val);
-  if (idx === -1) return err.textContent = "Неверный или использованный код";
+  if (idx === -1) {
+    err.textContent = "Неверный или использованный код";
+    return;
+  }
 
+  // одноразовый код — вырезаем и сохраняем
   validCodes.splice(idx, 1);
   localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+
+  usedCodes.push({ code: val, usedAt: Date.now() });
+  localStorage.setItem(USED_CODES_STORAGE, JSON.stringify(usedCodes));
+
   localStorage.setItem(ACCESS_KEY, "1");
 
   document.getElementById("authScreen").style.display = "none";
@@ -324,7 +490,10 @@ function showDeviceScreen() {
 
 function confirmDevice() {
   const checked = document.querySelector('input[name="device"]:checked');
-  if (!checked) return alert("Выберите модель iPhone");
+  if (!checked) {
+    alert("Выберите модель iPhone");
+    return;
+  }
   localStorage.setItem(DEVICE_KEY, checked.value);
   applyDevice(checked.value);
   document.getElementById("deviceScreen").style.display = "none";
@@ -336,27 +505,26 @@ function startApp() {
   show();
 }
 
-/* ====================== FULLSCREEN MODE ====================== */
+/* ======================== FULLSCREEN ======================== */
 
 function toggleFullScreen() {
-  const viewer = document.getElementById("viewer");
-  viewer.classList.toggle("fullscreen-active");
+  document.body.classList.toggle("fullscreen-mode");
 }
 
-// выход по тройному тапу
+// выход из fullscreen по тройному тапу
 let tapCount = 0;
 let tapTimer;
 
 document.addEventListener("touchend", () => {
   tapCount++;
   if (tapCount === 3) {
-    document.getElementById("viewer").classList.remove("fullscreen-active");
+    document.body.classList.remove("fullscreen-mode");
   }
   clearTimeout(tapTimer);
   tapTimer = setTimeout(() => tapCount = 0, 300);
 });
 
-/* ====================== FIX FOR IOS RE-ADD ====================== */
+/* ======================== FILE INPUT (фикс для iOS) ======================== */
 
 function createNewPicker() {
   const oldPicker = document.getElementById("picker");
@@ -370,10 +538,8 @@ function createNewPicker() {
 
   newPicker.addEventListener("change", e => {
     const file = e.target.files[0];
-    if (!file || !db) return;
-
-    if (photos.length >= 2) deleteFirstThenAdd(file);
-    else addToDB(file);
+    if (!file) return;
+    addPhotoFromFile(file);
   });
 
   document.body.appendChild(newPicker);
@@ -385,67 +551,19 @@ function pick() {
   picker.click();
 }
 
-/* ====================== GALLERY ====================== */
-
-let db;
-let photos = [];
-let indexPhoto = 0;
-
-const DB_NAME = "galleryDB_v2";
-const DB_STORE = "photos";
-
-const openReq = indexedDB.open(DB_NAME, 1);
-
-openReq.onupgradeneeded = e => {
-  db = e.target.result;
-  if (!db.objectStoreNames.contains(DB_STORE)) {
-    db.createObjectStore(DB_STORE, { autoIncrement: true });
-  }
-};
-
-openReq.onsuccess = e => {
-  db = e.target.result;
-  loadPhotos();
-};
-
-function loadPhotos() {
-  if (!db) return;
-  const tx = db.transaction(DB_STORE, "readonly");
-  const store = tx.objectStore(DB_STORE);
-  const req = store.getAll();
-  req.onsuccess = () => {
-    photos = req.result || [];
-    if (indexPhoto >= photos.length) indexPhoto = 0;
-    if (document.getElementById("app").style.display === "flex") show();
-  };
-}
-
-function deleteFirstThenAdd(file) {
-  const tx = db.transaction(DB_STORE, "readwrite");
-  const store = tx.objectStore(DB_STORE);
-  const curReq = store.openCursor();
-  curReq.onsuccess = ev => {
-    const cursor = ev.target.result;
-    if (cursor) {
-      cursor.delete();
-      addToDB(file);
-    }
-  };
-}
-
-function addToDB(file) {
-  const tx = db.transaction(DB_STORE, "readwrite");
-  tx.objectStore(DB_STORE).add(file);
-  tx.oncomplete = () => { loadPhotos(); };
-}
+/* ======================== ГАЛЕРЕЯ ======================== */
 
 function show() {
   const v = document.getElementById("viewer");
 
-  if (!photos.length) return v.innerHTML = "<span>Нет фото</span>";
+  if (!photos.length) {
+    v.innerHTML = "<span>Нет фото</span>";
+    return;
+  }
 
-  const blob = photos[indexPhoto];
-  const url  = URL.createObjectURL(blob);
+  if (indexPhoto >= photos.length) indexPhoto = photos.length - 1;
+
+  const url = photos[indexPhoto];
   v.innerHTML = `<img src="${url}" id="currentPhoto">`;
 
   document.getElementById("currentPhoto").onclick = next;
@@ -458,26 +576,11 @@ function next() {
 }
 
 function removePhoto() {
-  if (!photos.length || !db) return;
-
-  const tx = db.transaction(DB_STORE, "readwrite");
-  const store = tx.objectStore(DB_STORE);
-  const curReq = store.openCursor();
-  let i = 0;
-
-  curReq.onsuccess = e => {
-    const cursor = e.target.result;
-    if (cursor) {
-      if (i === indexPhoto) cursor.delete();
-      i++;
-      cursor.continue();
-    }
-  };
-
-  tx.oncomplete = () => {
-    if (indexPhoto > 0) indexPhoto--;
-    loadPhotos();
-  };
+  if (!photos.length) return;
+  photos.splice(indexPhoto, 1);
+  if (indexPhoto > 0) indexPhoto--;
+  savePhotos();
+  show();
 }
 </script>
 
