@@ -187,4 +187,107 @@ localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
 if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
 
-function che
+function checkCode(){
+    const val = accessCode.value.trim().toUpperCase();
+    const idx = validCodes.indexOf(val);
+    if(idx === -1){
+        authError.textContent = "Неверный код";
+        return;
+    }
+    validCodes.splice(idx, 1);
+    localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+    localStorage.setItem(ACCESS_KEY, "1");
+    showApp();
+}
+
+function showApp(){
+    authScreen.style.display = "none";
+    app.style.display = "flex";
+    show();
+}
+
+
+/* === GALLERY === */
+
+let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+let index = 0;
+let full = false;
+const MAX_STORAGE_BYTES = 25 * 1024 * 1024; // 25MB
+
+picker.addEventListener("change", async e => {
+    for (const file of e.target.files){
+        const base64 = await fileToBase64(file);
+        photos.push(base64);
+        autoCleanup();
+    }
+    save();
+    show();
+});
+
+function autoCleanup(){
+    while(roughSize(photos) > MAX_STORAGE_BYTES && photos.length > 1){
+        photos.shift(); // remove oldest silently
+    }
+}
+
+function roughSize(arr){
+    let total = 0;
+    for(const i of arr){
+        total += i.length * 2;
+    }
+    return total;
+}
+
+function fileToBase64(file){
+    return new Promise(res=>{
+        const r = new FileReader();
+        r.onload = ()=>res(r.result);
+        r.readAsDataURL(file);
+    });
+}
+
+function show(){
+    if(!photos.length){
+        viewer.innerHTML = "<span>Нет фото</span>";
+        return;
+    }
+    viewer.innerHTML = `<img src="${photos[index]}" id="img">`;
+    document.getElementById("img").onclick = next;
+}
+
+function next(){
+    index = (index + 1) % photos.length;
+    show();
+}
+
+function removePhoto(){
+    if(!photos.length) return;
+    photos.splice(index,1);
+    if(index > 0) index--;
+    save();
+    show();
+}
+
+function toggleFull(){
+    full = !full;
+    document.body.classList.toggle("fullscreen", full);
+}
+
+/* triple tap exit fullscreen */
+let taps = 0, timer = null;
+document.addEventListener("touchend", ()=>{
+    taps++;
+    if(taps === 3 && full){
+        toggleFull();
+    }
+    clearTimeout(timer);
+    timer = setTimeout(()=> taps = 0, 350);
+});
+
+function save(){ localStorage.setItem("photos", JSON.stringify(photos)); }
+
+show();
+</script>
+
+</body>
+</html>
