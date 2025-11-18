@@ -11,7 +11,6 @@
 
   <style>
     :root {
-      /* сюда будем подставлять «логический» размер экрана выбранного айфона */
       --device-width: 390;
       --device-height: 844;
     }
@@ -31,7 +30,6 @@
       margin: 10px 0;
     }
 
-    /* ЭКРАН ВВОДА КОДА */
     #authScreen {
       position: fixed;
       inset: 0;
@@ -44,11 +42,7 @@
       z-index: 1000;
     }
 
-    #authBox {
-      width: 100%;
-      max-width: 340px;
-      text-align: center;
-    }
+    #authBox { width: 100%; max-width: 340px; text-align: center; }
 
     #authBox input {
       width: 100%;
@@ -80,7 +74,6 @@
       font-size: 14px;
     }
 
-    /* ЭКРАН ВЫБОРА УСТРОЙСТВА */
     #deviceScreen {
       position: fixed;
       inset: 0;
@@ -119,9 +112,7 @@
       font-size: 15px;
     }
 
-    .device-item input {
-      margin-right: 10px;
-    }
+    .device-item input { margin-right: 10px; }
 
     #deviceButtons {
       padding-top: 10px;
@@ -139,17 +130,9 @@
       font-size: 16px;
     }
 
-    #deviceButtons .primary {
-      background: #1fa553;
-      color: #fff;
-    }
+    #deviceButtons .primary { background: #1fa553; color: #fff; }
+    #deviceButtons .secondary { background: #222; color: #fff; }
 
-    #deviceButtons .secondary {
-      background: #222;
-      color: #fff;
-    }
-
-    /* ОСНОВНОЕ ПРИЛОЖЕНИЕ */
     #app {
       display: none;
       flex-direction: column;
@@ -161,21 +144,17 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: auto; /* scroll, как ты просил */
+      overflow: auto;
       background: #000;
     }
 
     #viewer img {
-      /* фиксированный блок по выбранной модели, без object-fit */
       width: calc(var(--device-width) * 1px);
       height: calc(var(--device-height) * 1px);
       display: block;
     }
 
-    #viewer span {
-      color: #aaa;
-      font-size: 16px;
-    }
+    #viewer span { color: #aaa; font-size: 16px; }
 
     #controls {
       display: flex;
@@ -197,22 +176,30 @@
       cursor: pointer;
     }
 
-    /* Полноэкранный режим (если понадобится) */
-    .fullscreen h3,
-    .fullscreen #controls {
-      display: none;
+    /* ================= FULLSCREEN MODE ================= */
+
+    #viewer.fullscreen-active {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 9999 !important;
+      background: #000 !important;
     }
 
-    .fullscreen #viewer {
-      flex: 1;
-      height: 100vh;
+    #viewer.fullscreen-active img {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: contain !important;
+    }
+
+    #viewer.fullscreen-active + #controls,
+    #app.fullscreen-hide h3 {
+      display: none !important;
     }
   </style>
 </head>
-
 <body>
 
-  <!-- ЭКРАН ВВОДА КОДА -->
+  <!-- AUTH -->
   <div id="authScreen">
     <div id="authBox">
       <h2>Доступ по коду</h2>
@@ -222,7 +209,7 @@
     </div>
   </div>
 
-  <!-- ЭКРАН ВЫБОРА УСТРОЙСТВА -->
+  <!-- DEVICE SELECT -->
   <div id="deviceScreen">
     <h2 style="text-align:center;margin:8px 0 0 0;">Выберите ваш iPhone</h2>
     <div id="deviceList"></div>
@@ -231,22 +218,21 @@
     </div>
   </div>
 
-  <!-- ГАЛЕРЕЯ -->
+  <!-- GALLERY -->
   <div id="app">
     <h3>Галерея</h3>
     <div id="viewer"><span>Нет фото</span></div>
     <input type="file" id="picker" accept="image/*" hidden />
     <div id="controls">
       <label for="picker">Добавить</label>
+      <button onclick="toggleFullScreen()">На весь экран</button>
       <button onclick="removePhoto()">Удалить</button>
       <button onclick="next()">Следующее</button>
     </div>
   </div>
 
 <script>
-/* =========================
-   НАСТРОЙКИ КОДОВ ДОСТУПА
-   ========================= */
+/* ====================== ACCESS CODES ====================== */
 
 const CODE_STORAGE = "validCodesDB";
 const ACCESS_KEY  = "gallery_access_granted";
@@ -267,77 +253,28 @@ let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
 
 localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
-/* ======================
-   НАСТРОЙКИ УСТРОЙСТВ
-   ====================== */
-/* это «логические» размеры экрана (CSS), под которые мы рисуем блок с картинкой.
-   Для всех айфонов 11+ (без mini), разделено по поколениям
-*/
+/* ======================= DEVICES ======================= */
+
 const DEVICES = [
-  {
-    group: "iPhone 11",
-    items: [
-      { id:"iphone11",       name:"iPhone 11",        cssW:414, cssH:896 },
-      { id:"iphone11pro",    name:"iPhone 11 Pro",    cssW:375, cssH:812 },
-      { id:"iphone11promax", name:"iPhone 11 Pro Max",cssW:414, cssH:896 },
-    ]
-  },
-  {
-    group: "iPhone 12",
-    items: [
-      { id:"iphone12",       name:"iPhone 12",        cssW:390, cssH:844 },
-      { id:"iphone12pro",    name:"iPhone 12 Pro",    cssW:390, cssH:844 },
-      { id:"iphone12promax", name:"iPhone 12 Pro Max",cssW:428, cssH:926 },
-    ]
-  },
-  {
-    group: "iPhone 13",
-    items: [
-      { id:"iphone13",       name:"iPhone 13",        cssW:390, cssH:844 },
-      { id:"iphone13pro",    name:"iPhone 13 Pro",    cssW:390, cssH:844 },
-      { id:"iphone13promax", name:"iPhone 13 Pro Max",cssW:428, cssH:926 },
-    ]
-  },
-  {
-    group: "iPhone 14",
-    items: [
-      { id:"iphone14",       name:"iPhone 14",        cssW:390, cssH:844 },
-      { id:"iphone14plus",   name:"iPhone 14 Plus",   cssW:428, cssH:926 },
-      { id:"iphone14pro",    name:"iPhone 14 Pro",    cssW:393, cssH:852 },
-      { id:"iphone14promax", name:"iPhone 14 Pro Max",cssW:430, cssH:932 },
-    ]
-  },
-  {
-    group: "iPhone 15",
-    items: [
-      { id:"iphone15",       name:"iPhone 15",        cssW:393, cssH:852 },
-      { id:"iphone15plus",   name:"iPhone 15 Plus",   cssW:430, cssH:932 },
-      { id:"iphone15pro",    name:"iPhone 15 Pro",    cssW:393, cssH:852 },
-      { id:"iphone15promax", name:"iPhone 15 Pro Max",cssW:430, cssH:932 },
-    ]
-  }
+  { group:"iPhone 11", items:[{id:"iphone11",name:"iPhone 11",cssW:414,cssH:896},{id:"iphone11pro",name:"iPhone 11 Pro",cssW:375,cssH:812},{id:"iphone11promax",name:"iPhone 11 Pro Max",cssW:414,cssH:896}] },
+  { group:"iPhone 12", items:[{id:"iphone12",name:"iPhone 12",cssW:390,cssH:844},{id:"iphone12pro",name:"iPhone 12 Pro",cssW:390,cssH:844},{id:"iphone12promax",name:"iPhone 12 Pro Max",cssW:428,cssH:926}] },
+  { group:"iPhone 13", items:[{id:"iphone13",name:"iPhone 13",cssW:390,cssH:844},{id:"iphone13pro",name:"iPhone 13 Pro",cssW:390,cssH:844},{id:"iphone13promax",name:"iPhone 13 Pro Max",cssW:428,cssH:926}] },
+  { group:"iPhone 14", items:[{id:"iphone14",name:"iPhone 14",cssW:390,cssH:844},{id:"iphone14plus",name:"iPhone 14 Plus",cssW:428,cssH:926},{id:"iphone14pro",name:"iPhone 14 Pro",cssW:393,cssH:852},{id:"iphone14promax",name:"iPhone 14 Pro Max",cssW:430,cssH:932}] },
+  { group:"iPhone 15", items:[{id:"iphone15",name:"iPhone 15",cssW:393,cssH:852},{id:"iphone15plus",name:"iPhone 15 Plus",cssW:430,cssH:932},{id:"iphone15pro",name:"iPhone 15 Pro",cssW:393,cssH:852},{id:"iphone15promax",name:"iPhone 15 Pro Max",cssW:430,cssH:932}] }
 ];
 
 function renderDeviceList() {
   const list = document.getElementById("deviceList");
   list.innerHTML = "";
-
   DEVICES.forEach(group => {
     const title = document.createElement("div");
     title.className = "device-group-title";
     title.textContent = group.group;
     list.appendChild(title);
-
     group.items.forEach(dev => {
       const row = document.createElement("label");
       row.className = "device-item";
-      row.innerHTML = `
-        <span>
-          <input type="radio" name="device" value="${dev.id}">
-          ${dev.name}
-        </span>
-        <span style="opacity:.5;font-size:12px;">${dev.cssW}×${dev.cssH}</span>
-      `;
+      row.innerHTML = `<span><input type="radio" name="device" value="${dev.id}">${dev.name}</span><span style="opacity:.5;font-size:12px;">${dev.cssW}×${dev.cssH}</span>`;
       list.appendChild(row);
     });
   });
@@ -355,39 +292,24 @@ function applyDevice(id) {
   }
 }
 
-/* ======================
-   ЛОГИКА ДОСТУПА
-   ====================== */
+/* =================== AUTH LOGIC =================== */
 
 if (localStorage.getItem(ACCESS_KEY) === "1") {
-  // код уже вводили
   document.getElementById("authScreen").style.display = "none";
   const savedDevice = localStorage.getItem(DEVICE_KEY);
-  if (savedDevice) {
-    applyDevice(savedDevice);
-    startApp();
-  } else {
-    showDeviceScreen();
-  }
+  if (savedDevice) { applyDevice(savedDevice); startApp(); }
+  else showDeviceScreen();
 }
 
 function checkCode() {
-  const input = document.getElementById("accessCode");
-  const err   = document.getElementById("authError");
-  const val   = (input.value || "").trim().toUpperCase();
+  const val = document.getElementById("accessCode").value.trim().toUpperCase();
+  const err = document.getElementById("authError");
 
-  if (!val) {
-    err.textContent = "Введите код";
-    return;
-  }
+  if (!val) return err.textContent = "Введите код";
 
   const idx = validCodes.indexOf(val);
-  if (idx === -1) {
-    err.textContent = "Неверный или использованный код";
-    return;
-  }
+  if (idx === -1) return err.textContent = "Неверный или использованный код";
 
-  // одноразовый код — удаляем
   validCodes.splice(idx, 1);
   localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
   localStorage.setItem(ACCESS_KEY, "1");
@@ -403,38 +325,44 @@ function showDeviceScreen() {
 
 function confirmDevice() {
   const checked = document.querySelector('input[name="device"]:checked');
-  if (!checked) {
-    alert("Выберите модель iPhone");
-    return;
-  }
-  const id = checked.value;
-  localStorage.setItem(DEVICE_KEY, id);
-  applyDevice(id);
-  document.getElementById("deviceScreen").style.display = "none";
-  startApp();
-}
-
-function skipDevice() {
-  // если человек нажал "Позже" — ставим дефолт (например, iPhone 14)
-  const defaultId = "iphone14";
-  localStorage.setItem(DEVICE_KEY, defaultId);
-  applyDevice(defaultId);
+  if (!checked) return alert("Выберите модель iPhone");
+  localStorage.setItem(DEVICE_KEY, checked.value);
+  applyDevice(checked.value);
   document.getElementById("deviceScreen").style.display = "none";
   startApp();
 }
 
 function startApp() {
   document.getElementById("app").style.display = "flex";
-  show(); // отрисовать, если уже были фото
+  show();
 }
 
-/* ======================
-   ГАЛЕРЕЯ (IndexedDB, 2 фото)
-   ====================== */
+/* ====================== FULLSCREEN BLOCK ====================== */
+
+function toggleFullScreen() {
+  const viewer = document.getElementById("viewer");
+  viewer.classList.toggle("fullscreen-active");
+}
+
+// выход по тройному тапу
+let tapCount = 0;
+let tapTimer;
+
+document.addEventListener("touchend", () => {
+  tapCount++;
+  if (tapCount === 3) {
+    document.getElementById("viewer").classList.remove("fullscreen-active");
+  }
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => tapCount = 0, 300);
+});
+
+/* ====================== GALLERY ====================== */
 
 let db;
-let photos = []; // массив Blob
+let photos = [];
 let indexPhoto = 0;
+
 const DB_NAME = "galleryDB_v2";
 const DB_STORE = "photos";
 
@@ -460,23 +388,16 @@ function loadPhotos() {
   req.onsuccess = () => {
     photos = req.result || [];
     if (indexPhoto >= photos.length) indexPhoto = 0;
-    if (document.getElementById("app").style.display === "flex") {
-      show();
-    }
+    if (document.getElementById("app").style.display === "flex") show();
   };
 }
 
-/* добавление файла */
 picker.addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file || !db) return;
 
-  if (photos.length >= 2) {
-    // удаляем самое старое, потом добавляем
-    deleteFirstThenAdd(file);
-  } else {
-    addToDB(file);
-  }
+  if (photos.length >= 2) deleteFirstThenAdd(file);
+  else addToDB(file);
 });
 
 function deleteFirstThenAdd(file) {
@@ -494,41 +415,28 @@ function deleteFirstThenAdd(file) {
 
 function addToDB(file) {
   const tx = db.transaction(DB_STORE, "readwrite");
-  const store = tx.objectStore(DB_STORE);
-  store.add(file);
-  tx.oncomplete = () => {
-    picker.value = "";
-    loadPhotos();
-  };
+  tx.objectStore(DB_STORE).add(file);
+  tx.oncomplete = () => { picker.value = ""; loadPhotos(); };
 }
-
-/* показ */
 
 function show() {
   const v = document.getElementById("viewer");
 
-  if (!photos.length) {
-    v.innerHTML = "<span>Нет фото</span>";
-    return;
-  }
+  if (!photos.length) return v.innerHTML = "<span>Нет фото</span>";
 
   const blob = photos[indexPhoto];
   const url  = URL.createObjectURL(blob);
   v.innerHTML = `<img src="${url}" id="currentPhoto">`;
 
-  // по клику — следующее
-  const img = document.getElementById("currentPhoto");
-  img.onclick = next;
+  document.getElementById("currentPhoto").onclick = next;
 }
 
-/* следующее фото */
 function next() {
   if (!photos.length) return;
   indexPhoto = (indexPhoto + 1) % photos.length;
   show();
 }
 
-/* удаление текущего */
 function removePhoto() {
   if (!photos.length || !db) return;
 
