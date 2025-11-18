@@ -99,19 +99,18 @@ h3 {
     width: 100vw;
     height: calc(100vh - 110px);
     object-fit: contain;
-    display: block;
 }
 
+/* controls */
 #controls {
     display: flex;
     justify-content: center;
-    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
     gap: 10px;
-    background: #000;
-    flex-wrap: wrap;
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
 }
 
-#controls button, #controls label {
+#controls label,
+#controls button {
     background: #1b1b1b;
     color: #fff;
     border: none;
@@ -152,13 +151,11 @@ h3 {
     </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- APP -->
 <div id="app">
     <h3>Галерея</h3>
     <div id="viewer"><span>Нет фото</span></div>
-
-    <input type="file" id="picker" accept="image/*" multiple hidden />
-
+    <input type="file" id="picker" accept="image/*" hidden multiple />
     <div id="controls">
         <label for="picker">Добавить</label>
         <button onclick="removePhoto()">Удалить</button>
@@ -166,8 +163,10 @@ h3 {
     </div>
 </div>
 
+
 <script>
-/* ACCESS SYSTEM */
+/* === ACCESS SYSTEM === */
+
 const CODE_STORAGE = "validCodesDB";
 const ACCESS_KEY = "gallery_access_granted";
 
@@ -188,103 +187,4 @@ localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
 if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
 
-function checkCode(){
-    const input = accessCode.value.trim().toUpperCase();
-    const err = document.getElementById("authError");
-    const idx = validCodes.indexOf(input);
-
-    if(idx === -1){
-        err.textContent = "Неверный или использованный код";
-        return;
-    }
-
-    validCodes.splice(idx, 1);
-    localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
-    localStorage.setItem(ACCESS_KEY, "1");
-
-    showApp();
-}
-
-function showApp(){
-    authScreen.style.display = "none";
-    app.style.display = "flex";
-    show();
-}
-
-/* === GALLERY === */
-let photos = JSON.parse(localStorage.getItem("photos") || "[]");
-let index = 0;
-let full = false;
-
-picker.addEventListener("change", async e => {
-    for (const f of e.target.files){
-        const base64 = await fileToBase64(f);
-        photos.push(base64);
-    }
-    picker.value = ""; // <<< FIX, теперь можно добавлять любое количество раз
-    save();
-    show();
-});
-
-function fileToBase64(file){
-    return new Promise(res=>{
-        const r = new FileReader();
-        r.onload = ()=>res(r.result);
-        r.readAsDataURL(file);
-    });
-}
-
-function show(){
-    if(!photos.length){
-        viewer.innerHTML = "<span>Нет фото</span>";
-        return;
-    }
-    viewer.innerHTML = `<img src="${photos[index]}" id="img">`;
-    document.getElementById("img").onclick = next;
-}
-
-function next(){
-    index = (index + 1) % photos.length;
-    show();
-}
-
-function removePhoto(){
-    if(!photos.length) return;
-    photos.splice(index,1);
-    if(index>0) index--;
-    save();
-    show();
-}
-
-function toggleFull(){
-    full = !full;
-    document.body.classList.toggle("fullscreen", full);
-}
-
-function save(){ 
-    localStorage.setItem("photos", JSON.stringify(photos)); 
-}
-
-/* === TRIPLE TAP EXIT FULLSCREEN === */
-let tapCount = 0;
-let tapTimer = null;
-
-document.addEventListener("touchend", () => {
-    tapCount++;
-
-    if (tapCount === 3 && full) {
-        full = false;
-        document.body.classList.remove("fullscreen");
-    }
-
-    clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => {
-        tapCount = 0;
-    }, 350);
-});
-
-show();
-</script>
-
-</body>
-</html>
+function che
