@@ -438,7 +438,7 @@ function readAndResize(file) {
 function addPhotoFromFile(file) {
   readAndResize(file).then(dataUrl => {
     if (!dataUrl) return;
-    if (photos.length >= 2) {
+    if (photos.length >= 5) {
       // максимум 2 фото — удаляем самое старое
       photos.shift();
     }
