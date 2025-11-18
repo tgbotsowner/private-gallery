@@ -1,14 +1,38 @@
+const CACHE_NAME = "private-gallery-v1";
+const APP_FILES = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./apple-touch-icon.png",
+];
+
+// Установка SW и кеширование файлов
 self.addEventListener("install", event => {
-    event.waitUntil(
-        caches.open("app-cache").then(cache => cache.addAll(["./"]))
-    );
-    self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES))
+  );
+  self.skipWaiting();
 });
 
+// Активация и удаление старых кешей
 self.addEventListener("activate", event => {
-    event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
+    )
+  );
+  self.clients.claim();
 });
 
+// Обработка запросов (cache → network → fallback)
 self.addEventListener("fetch", event => {
-    event.respondWith(caches.match(event.request).then(r => r || fetch(event.request)));
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request).catch(() => response);
+    })
+  );
 });
