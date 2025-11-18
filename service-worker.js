@@ -1,4 +1,4 @@
-const CACHE_NAME = "private-gallery-v1";
+const CACHE_NAME = "private-gallery-v2";
 const APP_FILES = [
   "./",
   "./index.html",
