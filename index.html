@@ -1,485 +1,460 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Private Gallery</title>
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="Glovo" />
-  <meta name="theme-color" content="#000" />
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Gallery" />
+    <meta name="theme-color" content="#000000" />
 
-  <style>
-    :root {
-      --device-width: 390;
-      --device-height: 844;
-    }
+    <title>Private Gallery</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000'/></svg>" />
 
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
 
-    h2, h3 {
-      text-align: center;
-      margin: 10px 0;
-    }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
 
-    #authScreen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      background: #000;
-      z-index: 1000;
-    }
+        body {
+            display: flex;
+            flex-direction: column;
+            padding: env(safe-area-inset-right) 0 0 env(safe-area-inset-left);
+        }
 
-    #authBox { width: 100%; max-width: 340px; text-align: center; }
+        h2,
+        h3 {
+            text-align: center;
+            margin: 10px 0;
+        }
 
-    #authBox input {
-      width: 100%;
-      padding: 12px;
-      margin-top: 8px;
-      border-radius: 10px;
-      border: 1px solid #444;
-      background: #111;
-      color: #fff;
-      font-size: 18px;
-      text-align: center;
-    }
+        /* ========== AUTH ========== */
+        #authScreen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: #000;
+            z-index: 1000;
+        }
 
-    #authBox button {
-      width: 100%;
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      background: #1fa553;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-    }
+        #authBox {
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+        }
 
-    #authError {
-      margin-top: 8px;
-      color: #ff3b3b;
-      min-height: 18px;
-      font-size: 14px;
-    }
+        #authBox input,
+        #authBox button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            background: #111;
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+        }
 
-    #deviceScreen {
-      position: fixed;
-      inset: 0;
-      display: none;
-      flex-direction: column;
-      background: #000;
-      color: #fff;
-      z-index: 900;
-      padding: 16px;
-      box-sizing: border-box;
-    }
+        #authBox button {
+            background: #1fa553;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
 
-    #deviceList {
-      flex: 1;
-      overflow-y: auto;
-      margin-top: 10px;
-    }
+        #authError {
+            margin-top: 8px;
+            color: #ff3b3b;
+            min-height: 18px;
+            font-size: 14px;
+        }
 
-    .device-group-title {
-      margin-top: 12px;
-      margin-bottom: 4px;
-      font-weight: bold;
-      font-size: 15px;
-      opacity: .8;
-    }
+        /* ========== DEVICE SELECT ========== */
+        #deviceScreen {
+            position: fixed;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            background: #000;
+            color: #fff;
+            z-index: 900;
+            padding: 16px;
+            box-sizing: border-box;
+        }
 
-    .device-item {
-      padding: 10px 12px;
-      margin-bottom: 6px;
-      border-radius: 8px;
-      background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      font-size: 15px;
-    }
+        #deviceList {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
 
-    .device-item input { margin-right: 10px; }
+        .device-group-title {
+            margin-top: 12px;
+            margin-bottom: 4px;
+            font-weight: bold;
+            font-size: 15px;
+            opacity: .8;
+        }
 
-    #deviceButtons {
-      padding-top: 10px;
-      border-top: 1px solid #222;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
+        .device-item {
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 15px;
+        }
 
-    #deviceButtons button {
-      flex: 1;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      font-size: 16px;
-    }
+        #deviceButtons {
+            padding-top: 10px;
+            border-top: 1px solid #222;
+            display: flex;
+            gap: 10px;
+        }
 
-    #deviceButtons .primary { background: #1fa553; color: #fff; }
-    #deviceButtons .secondary { background: #222; color: #fff; }
+        #deviceButtons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            background: #1fa553;
+            color: #fff;
+        }
 
-    #app {
-      display: none;
-      flex-direction: column;
-      height: 100vh;
-    }
+        /* ========== GALLERY ========== */
+        #app {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
 
-    #viewer {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: auto;
-      background: #000;
-    }
+        #viewer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: #000;
+            width: 100%;
+        }
 
-    #viewer img {
-      width: calc(var(--device-width) * 1px);
-      height: calc(var(--device-height) * 1px);
-      display: block;
-    }
+        #viewer img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
 
-    #viewer span { color: #aaa; font-size: 16px; }
+        #viewer span {
+            color: #aaa;
+            font-size: 16px;
+        }
 
-    #controls {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      padding: 10px 10px 12px 10px;
-      background: #000;
-      border-top: 1px solid #222;
-    }
+        #controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            background: #000;
+            border-top: 1px solid #222;
+            width: 100%;
+        }
 
-    #controls button {
-      background: #1c1c1c;
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      padding: 10px 16px;
-      font-size: 15px;
-      cursor: pointer;
-    }
+        #controls button {
+            background: #1c1c1c;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            padding: 10px 16px;
+            font-size: 15px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
 
-    /* ================= FULLSCREEN MODE ================= */
+        #controls button:active {
+            background: #2c2c2c;
+        }
 
-    #viewer.fullscreen-active {
-      position: fixed !important;
-      inset: 0 !important;
-      z-index: 9999 !important;
-      background: #000 !important;
-    }
+        /* ========== FULLSCREEN ========== */
+        body.fullscreen {
+            padding: 0 !important;
+        }
 
-    #viewer.fullscreen-active img {
-      width: 100vw !important;
-      height: 100vh !important;
-      object-fit: contain !important;
-    }
+        body.fullscreen h3 {
+            display: none !important;
+        }
 
-    #viewer.fullscreen-active + #controls,
-    #app.fullscreen-hide h3 {
-      display: none !important;
-    }
-  </style>
+        body.fullscreen #controls {
+            display: none !important;
+        }
+
+        body.fullscreen #viewer {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+        }
+
+        body.fullscreen #viewer img {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+    </style>
 </head>
+
 <body>
-
-  <!-- AUTH -->
-  <div id="authScreen">
-    <div id="authBox">
-      <h2>Доступ по коду</h2>
-      <input id="accessCode" type="text" placeholder="Введите код" autocomplete="off" />
-      <button onclick="checkCode()">Войти</button>
-      <div id="authError"></div>
+    <!-- AUTH -->
+    <div id="authScreen">
+        <div id="authBox">
+            <h2>Доступ по коду</h2>
+            <input id="accessCode" type="text" placeholder="Введите код" autocomplete="off" />
+            <button onclick="checkCode()">Войти</button>
+            <div id="authError"></div>
+        </div>
     </div>
-  </div>
 
-  <!-- DEVICE SELECT -->
-  <div id="deviceScreen">
-    <h2 style="text-align:center;margin:8px 0 0 0;">Выберите ваш iPhone</h2>
-    <div id="deviceList"></div>
-    <div id="deviceButtons">
-      <button class="primary" onclick="confirmDevice()">Продолжить</button>
+    <!-- DEVICE SELECT -->
+    <div id="deviceScreen">
+        <h2 style="text-align:center; margin:8px 0 0 0;">Выберите ваш iPhone</h2>
+        <div id="deviceList"></div>
+        <div id="deviceButtons">
+            <button onclick="confirmDevice()">Продолжить</button>
+        </div>
     </div>
-  </div>
 
-  <!-- GALLERY -->
-  <div id="app">
-    <h3>Галерея</h3>
-    <div id="viewer"><span>Нет фото</span></div>
-
-    <!-- input создаём динамически -->
-    
-    <div id="controls">
-      <button onclick="pick()">Добавить</button>
-      <button onclick="toggleFullScreen()">На весь экран</button>
-      <button onclick="removePhoto()">Удалить</button>
-      <button onclick="next()">Следующее</button>
+    <!-- GALLERY -->
+    <div id="app">
+        <h3>Галерея</h3>
+        <div id="viewer"><span>Нет фото</span></div>
+        <div id="controls">
+            <button onclick="pick()">Добавить</button>
+            <button onclick="removePhoto()">Удалить</button>
+            <button onclick="toggleFullScreen()">На весь экран</button>
+            <button onclick="next()">Следующее</button>
+        </div>
     </div>
-  </div>
 
-<script>
-/* ====================== ACCESS CODES ====================== */
+    <script>
+        const CODE_STORAGE = "validCodesDB";
+        const ACCESS_KEY = "gallery_access_granted";
+        const DEVICE_KEY = "gallery_device_model";
+        const PHOTOS_STORAGE = "galleryPhotos";
 
-const CODE_STORAGE = "validCodesDB";
-const ACCESS_KEY  = "gallery_access_granted";
-const DEVICE_KEY  = "gallery_device_model";
+        let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE) || "[]");
+        localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
-let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [];
+        const DEVICES = [
+            { group: "iPhone 11", items: [{ id: "iphone11", name: "iPhone 11", cssW: 414, cssH: 896 }, { id: "iphone11pro", name: "iPhone 11 Pro", cssW: 375, cssH: 812 }, { id: "iphone11promax", name: "iPhone 11 Pro Max", cssW: 414, cssH: 896 }] },
+            { group: "iPhone 12", items: [{ id: "iphone12", name: "iPhone 12", cssW: 390, cssH: 844 }, { id: "iphone12pro", name: "iPhone 12 Pro", cssW: 390, cssH: 844 }, { id: "iphone12promax", name: "iPhone 12 Pro Max", cssW: 428, cssH: 926 }] },
+            { group: "iPhone 13", items: [{ id: "iphone13", name: "iPhone 13", cssW: 390, cssH: 844 }, { id: "iphone13pro", name: "iPhone 13 Pro", cssW: 390, cssH: 844 }, { id: "iphone13promax", name: "iPhone 13 Pro Max", cssW: 428, cssH: 926 }] },
+            { group: "iPhone 14", items: [{ id: "iphone14", name: "iPhone 14", cssW: 390, cssH: 844 }, { id: "iphone14plus", name: "iPhone 14 Plus", cssW: 428, cssH: 926 }, { id: "iphone14pro", name: "iPhone 14 Pro", cssW: 393, cssH: 852 }, { id: "iphone14promax", name: "iPhone 14 Pro Max", cssW: 430, cssH: 932 }] },
+            { group: "iPhone 15", items: [{ id: "iphone15", name: "iPhone 15", cssW: 393, cssH: 852 }, { id: "iphone15plus", name: "iPhone 15 Plus", cssW: 430, cssH: 932 }, { id: "iphone15pro", name: "iPhone 15 Pro", cssW: 393, cssH: 852 }, { id: "iphone15promax", name: "iPhone 15 Pro Max", cssW: 430, cssH: 932 }] },
+            { group: "iPhone 16", items: [{ id: "iphone16", name: "iPhone 16", cssW: 393, cssH: 852 }, { id: "iphone16plus", name: "iPhone 16 Plus", cssW: 430, cssH: 932 }, { id: "iphone16pro", name: "iPhone 16 Pro", cssW: 402, cssH: 874 }, { id: "iphone16promax", name: "iPhone 16 Pro Max", cssW: 442, cssH: 960 }] }
+        ];
 
-localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+        function renderDeviceList() {
+            const list = document.getElementById("deviceList");
+            list.innerHTML = "";
+            DEVICES.forEach(group => {
+                const title = document.createElement("div");
+                title.className = "device-group-title";
+                title.textContent = group.group;
+                list.appendChild(title);
+                group.items.forEach(dev => {
+                    const row = document.createElement("label");
+                    row.className = "device-item";
+                    row.innerHTML = `<span><input type="radio" name="device" value="${dev.id}">${dev.name}</span><span style="opacity:.5;font-size:12px;">${dev.cssW}×${dev.cssH}</span>`;
+                    list.appendChild(row);
+                });
+            });
+        }
 
-/* ======================= DEVICES ======================= */
+        function applyDevice(id) {
+            for (const g of DEVICES) {
+                for (const d of g.items) {
+                    if (d.id === id) {
+                        document.documentElement.style.setProperty("--device-width", d.cssW);
+                        document.documentElement.style.setProperty("--device-height", d.cssH);
+                        return;
+                    }
+                }
+            }
+        }
 
-const DEVICES = [
-  { group:"iPhone 11", items:[{id:"iphone11",name:"iPhone 11",cssW:414,cssH:896},{id:"iphone11pro",name:"iPhone 11 Pro",cssW:375,cssH:812},{id:"iphone11promax",name:"iPhone 11 Pro Max",cssW:414,cssH:896}] },
-  { group:"iPhone 12", items:[{id:"iphone12",name:"iPhone 12",cssW:390,cssH:844},{id:"iphone12pro",name:"iPhone 12 Pro",cssW:390,cssH:844},{id:"iphone12promax",name:"iPhone 12 Pro Max",cssW:428,cssH:926}] },
-  { group:"iPhone 13", items:[{id:"iphone13",name:"iPhone 13",cssW:390,cssH:844},{id:"iphone13pro",name:"iPhone 13 Pro",cssW:390,cssH:844},{id:"iphone13promax",name:"iPhone 13 Pro Max",cssW:428,cssH:926}] },
-  { group:"iPhone 14", items:[{id:"iphone14",name:"iPhone 14",cssW:390,cssH:844},{id:"iphone14plus",name:"iPhone 14 Plus",cssW:428,cssH:926},{id:"iphone14pro",name:"iPhone 14 Pro",cssW:393,cssH:852},{id:"iphone14promax",name:"iPhone 14 Pro Max",cssW:430,cssH:932}] },
-  { group:"iPhone 15", items:[{id:"iphone15",name:"iPhone 15",cssW:393,cssH:852},{id:"iphone15plus",name:"iPhone 15 Plus",cssW:430,cssH:932},{id:"iphone15pro",name:"IPhone 15 Pro",cssW:393,cssH:852},{id:"iphone15promax",name:"IPhone 15 Pro Max",cssW:430,cssH:932}] },
+        if (localStorage.getItem(ACCESS_KEY) === "1") {
+            document.getElementById("authScreen").style.display = "none";
+            const savedDevice = localStorage.getItem(DEVICE_KEY);
+            if (savedDevice) { applyDevice(savedDevice); startApp(); }
+            else showDeviceScreen();
+        }
 
-  /* iPhone 16 */
-  { group:"iPhone 16", items:[
-    { id:"iphone16", name:"iPhone 16", cssW:393, cssH:852 },
-    { id:"iphone16plus", name:"iPhone 16 Plus", cssW:430, cssH:932 },
-    { id:"iphone16pro", name:"iPhone 16 Pro", cssW:402, cssH:874 },
-    { id:"iphone16promax", name:"iPhone 16 Pro Max", cssW:442, cssH:960 }
-  ]}
-];
+        function checkCode() {
+            const val = document.getElementById("accessCode").value.trim().toUpperCase();
+            const err = document.getElementById("authError");
 
-function renderDeviceList() {
-  const list = document.getElementById("deviceList");
-  list.innerHTML = "";
-  DEVICES.forEach(group => {
-    const title = document.createElement("div");
-    title.className = "device-group-title";
-    title.textContent = group.group;
-    list.appendChild(title);
-    group.items.forEach(dev => {
-      const row = document.createElement("label");
-      row.className = "device-item";
-      row.innerHTML = `<span><input type="radio" name="device" value="${dev.id}">${dev.name}</span><span style="opacity:.5;font-size:12px;">${dev.cssW}×${dev.cssH}</span>`;
-      list.appendChild(row);
-    });
-  });
-}
+            if (!val) return err.textContent = "Введите код";
 
-function applyDevice(id) {
-  for (const g of DEVICES) {
-    for (const d of g.items) {
-      if (d.id === id) {
-        document.documentElement.style.setProperty("--device-width", d.cssW);
-        document.documentElement.style.setProperty("--device-height", d.cssH);
-        return;
-      }
-    }
-  }
-}
+            const idx = validCodes.indexOf(val);
+            if (idx === -1) return err.textContent = "Неверный или использованный код";
 
-/* =================== AUTH LOGIC =================== */
+            validCodes.splice(idx, 1);
+            localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+            localStorage.setItem(ACCESS_KEY, "1");
 
-if (localStorage.getItem(ACCESS_KEY) === "1") {
-  document.getElementById("authScreen").style.display = "none";
-  const savedDevice = localStorage.getItem(DEVICE_KEY);
-  if (savedDevice) { applyDevice(savedDevice); startApp(); }
-  else showDeviceScreen();
-}
+            document.getElementById("authScreen").style.display = "none";
+            showDeviceScreen();
+        }
 
-function checkCode() {
-  const val = document.getElementById("accessCode").value.trim().toUpperCase();
-  const err = document.getElementById("authError");
+        function showDeviceScreen() {
+            renderDeviceList();
+            document.getElementById("deviceScreen").style.display = "flex";
+        }
 
-  if (!val) return err.textContent = "Введите код";
+        function confirmDevice() {
+            const checked = document.querySelector('input[name="device"]:checked');
+            if (!checked) return alert("Выберите модель iPhone");
+            localStorage.setItem(DEVICE_KEY, checked.value);
+            applyDevice(checked.value);
+            document.getElementById("deviceScreen").style.display = "none";
+            startApp();
+        }
 
-  const idx = validCodes.indexOf(val);
-  if (idx === -1) return err.textContent = "Неверный или использованный код";
+        function startApp() {
+            document.getElementById("app").style.display = "flex";
+            loadPhotos();
+            show();
+        }
 
-  validCodes.splice(idx, 1);
-  localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
-  localStorage.setItem(ACCESS_KEY, "1");
+        function toggleFullScreen() {
+            document.body.classList.toggle("fullscreen");
+        }
 
-  document.getElementById("authScreen").style.display = "none";
-  showDeviceScreen();
-}
+        // Выход по тройному тапу
+        let tapCount = 0;
+        let tapTimer;
 
-function showDeviceScreen() {
-  renderDeviceList();
-  document.getElementById("deviceScreen").style.display = "flex";
-}
+        document.addEventListener("touchend", () => {
+            tapCount++;
+            if (tapCount === 3) {
+                document.body.classList.remove("fullscreen");
+                tapCount = 0;
+            }
+            clearTimeout(tapTimer);
+            tapTimer = setTimeout(() => tapCount = 0, 300);
+        });
 
-function confirmDevice() {
-  const checked = document.querySelector('input[name="device"]:checked');
-  if (!checked) return alert("Выберите модель iPhone");
-  localStorage.setItem(DEVICE_KEY, checked.value);
-  applyDevice(checked.value);
-  document.getElementById("deviceScreen").style.display = "none";
-  startApp();
-}
+        // GALLERY
+        let photos = [];
+        let indexPhoto = 0;
 
-function startApp() {
-  document.getElementById("app").style.display = "flex";
-  show();
-}
+        function createNewPicker() {
+            const oldPicker = document.getElementById("picker");
+            if (oldPicker) oldPicker.remove();
 
-/* ====================== FULLSCREEN MODE ====================== */
+            const newPicker = document.createElement("input");
+            newPicker.type = "file";
+            newPicker.id = "picker";
+            newPicker.accept = "image/*";
+            newPicker.hidden = true;
 
-function toggleFullScreen() {
-  const viewer = document.getElementById("viewer");
-  viewer.classList.toggle("fullscreen-active");
-}
+            newPicker.addEventListener("change", e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                addPhoto(file);
+            });
 
-// выход по тройному тапу
-let tapCount = 0;
-let tapTimer;
+            document.body.appendChild(newPicker);
+        }
 
-document.addEventListener("touchend", () => {
-  tapCount++;
-  if (tapCount === 3) {
-    document.getElementById("viewer").classList.remove("fullscreen-active");
-  }
-  clearTimeout(tapTimer);
-  tapTimer = setTimeout(() => tapCount = 0, 300);
-});
+        function pick() {
+            createNewPicker();
+            document.getElementById("picker").click();
+        }
 
-/* ====================== FIX FOR IOS RE-ADD ====================== */
+        function addPhoto(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                photos.push(e.target.result);
+                savePhotos();
+                show();
+            };
+            reader.readAsDataURL(file);
+        }
 
-function createNewPicker() {
-  const oldPicker = document.getElementById("picker");
-  if (oldPicker) oldPicker.remove();
+        function savePhotos() {
+            localStorage.setItem(PHOTOS_STORAGE, JSON.stringify(photos));
+        }
 
-  const newPicker = document.createElement("input");
-  newPicker.type = "file";
-  newPicker.id = "picker";
-  newPicker.accept = "image/*";
-  newPicker.hidden = true;
+        function loadPhotos() {
+            photos = JSON.parse(localStorage.getItem(PHOTOS_STORAGE) || "[]");
+            if (indexPhoto >= photos.length) indexPhoto = 0;
+        }
 
-  newPicker.addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file || !db) return;
+        function show() {
+            const v = document.getElementById("viewer");
+            if (!photos.length) return v.innerHTML = "<span>Нет фото</span>";
 
-    if (photos.length >= 2) deleteFirstThenAdd(file);
-    else addToDB(file);
-  });
+            v.innerHTML = `<img src="${photos[indexPhoto]}" id="currentPhoto" alt="photo">`;
+            document.getElementById("currentPhoto").onclick = next;
+        }
 
-  document.body.appendChild(newPicker);
-  window.picker = newPicker;
-}
+        function next() {
+            if (!photos.length) return;
+            indexPhoto = (indexPhoto + 1) % photos.length;
+            show();
+        }
 
-function pick() {
-  createNewPicker();
-  picker.click();
-}
+        function removePhoto() {
+            if (!photos.length) return;
+            photos.splice(indexPhoto, 1);
+            if (indexPhoto > 0) indexPhoto--;
+            savePhotos();
+            show();
+        }
 
-/* ====================== GALLERY ====================== */
-
-let db;
-let photos = [];
-let indexPhoto = 0;
-
-const DB_NAME = "galleryDB_v2";
-const DB_STORE = "photos";
-
-const openReq = indexedDB.open(DB_NAME, 1);
-
-openReq.onupgradeneeded = e => {
-  db = e.target.result;
-  if (!db.objectStoreNames.contains(DB_STORE)) {
-    db.createObjectStore(DB_STORE, { autoIncrement: true });
-  }
-};
-
-openReq.onsuccess = e => {
-  db = e.target.result;
-  loadPhotos();
-};
-
-function loadPhotos() {
-  if (!db) return;
-  const tx = db.transaction(DB_STORE, "readonly");
-  const store = tx.objectStore(DB_STORE);
-  const req = store.getAll();
-  req.onsuccess = () => {
-    photos = req.result || [];
-    if (indexPhoto >= photos.length) indexPhoto = 0;
-    if (document.getElementById("app").style.display === "flex") show();
-  };
-}
-
-function deleteFirstThenAdd(file) {
-  const tx = db.transaction(DB_STORE, "readwrite");
-  const store = tx.objectStore(DB_STORE);
-  const curReq = store.openCursor();
-  curReq.onsuccess = ev => {
-    const cursor = ev.target.result;
-    if (cursor) {
-      cursor.delete();
-      addToDB(file);
-    }
-  };
-}
-
-function addToDB(file) {
-  const tx = db.transaction(DB_STORE, "readwrite");
-  tx.objectStore(DB_STORE).add(file);
-  tx.oncomplete = () => { loadPhotos(); };
-}
-
-function show() {
-  const v = document.getElementById("viewer");
-
-  if (!photos.length) return v.innerHTML = "<span>Нет фото</span>";
-
-  const blob = photos[indexPhoto];
-  const url  = URL.createObjectURL(blob);
-  v.innerHTML = `<img src="${url}" id="currentPhoto">`;
-
-  document.getElementById("currentPhoto").onclick = next;
-}
-
-function next() {
-  if (!photos.length) return;
-  indexPhoto = (indexPhoto + 1) % photos.length;
-  show();
-}
-
-function removePhoto() {
-  if (!photos.length || !db) return;
-
-  const tx = db.transaction(DB_STORE, "readwrite");
-  const store = tx.objectStore(DB_STORE);
-  const curReq = store.openCursor();
-  let i = 0;
-
-  curReq.onsuccess = e => {
-    const cursor = e.target.result;
-    if (cursor) {
-      if (i === indexPhoto) cursor.delete();
-      i++;
-      cursor.continue();
-    }
-  };
-
-  tx.oncomplete = () => {
-    if (indexPhoto > 0) indexPhoto--;
-    loadPhotos();
-  };
-}
-</script>
-
+        // Register Service Worker
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js").catch(err => {
+                console.log("SW error:", err);
+            });
+        }
+    </script>
 </body>
+
 </html>
