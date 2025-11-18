@@ -1,292 +1,556 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>Private Gallery</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Gallery" />
+  <meta name="theme-color" content="#000" />
 
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-<meta name="apple-mobile-web-app-title" content="Glovo" />
+  <style>
+    :root {
+      /* сюда будем подставлять «логический» размер экрана выбранного айфона */
+      --device-width: 390;
+      --device-height: 844;
+    }
 
-<title>Private Gallery</title>
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#000" />
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-<style>
-body {
-    margin: 0;
-    padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
-    background: #000;
-    color: #fff;
-    font-family: Arial, sans-serif;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
+    h2, h3 {
+      text-align: center;
+      margin: 10px 0;
+    }
 
-/* LOGIN */
-#authScreen {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    text-align: center;
-    z-index: 9999;
-    padding: 20px;
-}
+    /* ЭКРАН ВВОДА КОДА */
+    #authScreen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background: #000;
+      z-index: 1000;
+    }
 
-#authBox {
-    width: 100%;
-    max-width: 340px;
-}
+    #authBox {
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+    }
 
-#accessCode {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 10px;
-    border: 1px solid #333;
-    background: #111;
-    color: #fff;
-    font-size: 18px;
-    text-align: center;
-}
+    #authBox input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+      font-size: 18px;
+      text-align: center;
+    }
 
-#authBox button {
-    width: 100%;
-    margin-top: 12px;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: #1fa553;
-    color: #fff;
-    font-size: 18px;
-}
+    #authBox button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #1fa553;
+      color: #fff;
+      font-size: 18px;
+    }
 
-#authError {
-    margin-top: 8px;
-    color: #ff3b3b;
-    min-height: 18px;
-    font-size: 15px;
-}
+    #authError {
+      margin-top: 8px;
+      color: #ff3b3b;
+      min-height: 18px;
+      font-size: 14px;
+    }
 
-/* MAIN APP */
-#app {
-    display: none;
-    height: 100%;
-    flex-direction: column;
-}
+    /* ЭКРАН ВЫБОРА УСТРОЙСТВА */
+    #deviceScreen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      background: #000;
+      color: #fff;
+      z-index: 900;
+      padding: 16px;
+      box-sizing: border-box;
+    }
 
-h3 {
-    text-align: center;
-    margin: 8px 0;
-}
+    #deviceList {
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
 
-#viewer {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background: #000;
-}
+    .device-group-title {
+      margin-top: 12px;
+      margin-bottom: 4px;
+      font-weight: bold;
+      font-size: 15px;
+      opacity: .8;
+    }
 
-#viewer img {
-    width: 100vw;
-    height: calc(100vh - 110px);
-    object-fit: contain;
-}
+    .device-item {
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: 15px;
+    }
 
-/* controls */
-#controls {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
-}
+    .device-item input {
+      margin-right: 10px;
+    }
 
-#controls label,
-#controls button {
-    background: #1b1b1b;
-    color: #fff;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-size: 15px;
-    cursor: pointer;
-}
+    #deviceButtons {
+      padding-top: 10px;
+      border-top: 1px solid #222;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
 
-/* FULLSCREEN */
-.fullscreen h3,
-.fullscreen #controls { display: none; }
+    #deviceButtons button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
 
-.fullscreen #viewer {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: #000;
-}
+    #deviceButtons .primary {
+      background: #1fa553;
+      color: #fff;
+    }
 
-.fullscreen #viewer img {
-    width: 100vw;
-    height: 100vh;
-    object-fit: contain;
-}
-</style>
+    #deviceButtons .secondary {
+      background: #222;
+      color: #fff;
+    }
+
+    /* ОСНОВНОЕ ПРИЛОЖЕНИЕ */
+    #app {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #viewer {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: auto; /* scroll, как ты просил */
+      background: #000;
+    }
+
+    #viewer img {
+      /* фиксированный блок по выбранной модели, без object-fit */
+      width: calc(var(--device-width) * 1px);
+      height: calc(var(--device-height) * 1px);
+      display: block;
+    }
+
+    #viewer span {
+      color: #aaa;
+      font-size: 16px;
+    }
+
+    #controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 10px 12px 10px;
+      background: #000;
+      border-top: 1px solid #222;
+    }
+
+    #controls label,
+    #controls button {
+      background: #1c1c1c;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    /* Полноэкранный режим (если понадобится) */
+    .fullscreen h3,
+    .fullscreen #controls {
+      display: none;
+    }
+
+    .fullscreen #viewer {
+      flex: 1;
+      height: 100vh;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="authScreen">
+  <!-- ЭКРАН ВВОДА КОДА -->
+  <div id="authScreen">
     <div id="authBox">
-        <h2>Доступ по коду</h2>
-        <input id="accessCode" type="text" placeholder="Введите код" />
-        <button onclick="checkCode()">Войти</button>
-        <div id="authError"></div>
+      <h2>Доступ по коду</h2>
+      <input id="accessCode" type="text" placeholder="Введите код" autocomplete="off" />
+      <button onclick="checkCode()">Войти</button>
+      <div id="authError"></div>
     </div>
-</div>
+  </div>
 
-<!-- APP -->
-<div id="app">
+  <!-- ЭКРАН ВЫБОРА УСТРОЙСТВА -->
+  <div id="deviceScreen">
+    <h2 style="text-align:center;margin:8px 0 0 0;">Выберите ваш iPhone</h2>
+    <div id="deviceList"></div>
+    <div id="deviceButtons">
+      <button class="primary" onclick="confirmDevice()">Продолжить</button>
+    </div>
+  </div>
+
+  <!-- ГАЛЕРЕЯ -->
+  <div id="app">
     <h3>Галерея</h3>
     <div id="viewer"><span>Нет фото</span></div>
-    <input type="file" id="picker" accept="image/*" hidden multiple />
+    <input type="file" id="picker" accept="image/*" hidden />
     <div id="controls">
-        <label for="picker">Добавить</label>
-        <button onclick="removePhoto()">Удалить</button>
-        <button onclick="toggleFull()">На весь экран</button>
+      <label for="picker">Добавить</label>
+      <button onclick="removePhoto()">Удалить</button>
+      <button onclick="next()">Следующее</button>
     </div>
-</div>
-
+  </div>
 
 <script>
-/* === ACCESS SYSTEM === */
+/* =========================
+   НАСТРОЙКИ КОДОВ ДОСТУПА
+   ========================= */
 
 const CODE_STORAGE = "validCodesDB";
-const ACCESS_KEY = "gallery_access_granted";
+const ACCESS_KEY  = "gallery_access_granted";
+const DEVICE_KEY  = "gallery_device_model";
 
 let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
-"AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
-"R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
-"K2M9YS","ZX98QW","PL92AB","V7C3KD","JQ55LM",
-"TR99WO","NP24QS","HF88ZX","KJ72FE","MD45CL",
-"SA71PQ","DL39WE","VM84TZ","CF28RX","YU63NB",
-"PO57AJ","GE11KV","TH44MS","WK06YD","RX73PL",
-"BN19QF","ZS82GH","KC40VM","LU55RT","AJ90XE",
-"QM81DC","PT36BW","FA67HL","ND04JQ","XV29KT",
-"HG52PA","LB88CD","MS14QW","DT95ER","FW30UX",
-"YP77SK","OV21BZ","CR68TM","JL59HQ","VE03NP"
+  "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
+  "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
+  "K2M9YS","ZX98QW","PL92AB","V7C3KD","JQ55LM",
+  "TR99WO","NP24QS","HF88ZX","KJ72FE","MD45CL",
+  "SA71PQ","DL39WE","VM84TZ","CF28RX","YU63NB",
+  "PO57AJ","GE11KV","TH44MS","WK06YD","RX73PL",
+  "BN19QF","ZS82GH","KC40VM","LU55RT","AJ90XE",
+  "QM81DC","PT36BW","FA67HL","ND04JQ","XV29KT",
+  "HG52PA","LB88CD","MS14QW","DT95ER","FW30UX",
+  "YP77SK","OV21BZ","CR68TM","JL59HQ","VE03NP"
 ];
 
 localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
-if (localStorage.getItem(ACCESS_KEY) === "1") showApp();
+/* ======================
+   НАСТРОЙКИ УСТРОЙСТВ
+   ====================== */
+/* это «логические» размеры экрана (CSS), под которые мы рисуем блок с картинкой.
+   Для всех айфонов 11+ (без mini), разделено по поколениям
+*/
+const DEVICES = [
+  {
+    group: "iPhone 11",
+    items: [
+      { id:"iphone11",       name:"iPhone 11",        cssW:414, cssH:896 },
+      { id:"iphone11pro",    name:"iPhone 11 Pro",    cssW:375, cssH:812 },
+      { id:"iphone11promax", name:"iPhone 11 Pro Max",cssW:414, cssH:896 },
+    ]
+  },
+  {
+    group: "iPhone 12",
+    items: [
+      { id:"iphone12",       name:"iPhone 12",        cssW:390, cssH:844 },
+      { id:"iphone12pro",    name:"iPhone 12 Pro",    cssW:390, cssH:844 },
+      { id:"iphone12promax", name:"iPhone 12 Pro Max",cssW:428, cssH:926 },
+    ]
+  },
+  {
+    group: "iPhone 13",
+    items: [
+      { id:"iphone13",       name:"iPhone 13",        cssW:390, cssH:844 },
+      { id:"iphone13pro",    name:"iPhone 13 Pro",    cssW:390, cssH:844 },
+      { id:"iphone13promax", name:"iPhone 13 Pro Max",cssW:428, cssH:926 },
+    ]
+  },
+  {
+    group: "iPhone 14",
+    items: [
+      { id:"iphone14",       name:"iPhone 14",        cssW:390, cssH:844 },
+      { id:"iphone14plus",   name:"iPhone 14 Plus",   cssW:428, cssH:926 },
+      { id:"iphone14pro",    name:"iPhone 14 Pro",    cssW:393, cssH:852 },
+      { id:"iphone14promax", name:"iPhone 14 Pro Max",cssW:430, cssH:932 },
+    ]
+  },
+  {
+    group: "iPhone 15",
+    items: [
+      { id:"iphone15",       name:"iPhone 15",        cssW:393, cssH:852 },
+      { id:"iphone15plus",   name:"iPhone 15 Plus",   cssW:430, cssH:932 },
+      { id:"iphone15pro",    name:"iPhone 15 Pro",    cssW:393, cssH:852 },
+      { id:"iphone15promax", name:"iPhone 15 Pro Max",cssW:430, cssH:932 },
+    ]
+  }
+];
 
-function checkCode(){
-    const val = accessCode.value.trim().toUpperCase();
-    const idx = validCodes.indexOf(val);
-    if(idx === -1){
-        authError.textContent = "Неверный код";
-        return;
-    }
-    validCodes.splice(idx, 1);
-    localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
-    localStorage.setItem(ACCESS_KEY, "1");
-    showApp();
-}
+function renderDeviceList() {
+  const list = document.getElementById("deviceList");
+  list.innerHTML = "";
 
-function showApp(){
-    authScreen.style.display = "none";
-    app.style.display = "flex";
-    show();
-}
+  DEVICES.forEach(group => {
+    const title = document.createElement("div");
+    title.className = "device-group-title";
+    title.textContent = group.group;
+    list.appendChild(title);
 
-
-/* === GALLERY === */
-
-let photos = JSON.parse(localStorage.getItem("photos") || "[]");
-let index = 0;
-let full = false;
-const MAX_STORAGE_BYTES = 25 * 1024 * 1024; // 25MB
-
-picker.addEventListener("change", async e => {
-    for (const file of e.target.files){
-        const base64 = await fileToBase64(file);
-        photos.push(base64);
-        autoCleanup();
-    }
-    save();
-    show();
-});
-
-function autoCleanup(){
-    while(roughSize(photos) > MAX_STORAGE_BYTES && photos.length > 1){
-        photos.shift(); // remove oldest silently
-    }
-}
-
-function roughSize(arr){
-    let total = 0;
-    for(const i of arr){
-        total += i.length * 2;
-    }
-    return total;
-}
-
-function fileToBase64(file){
-    return new Promise(res=>{
-        const r = new FileReader();
-        r.onload = ()=>res(r.result);
-        r.readAsDataURL(file);
+    group.items.forEach(dev => {
+      const row = document.createElement("label");
+      row.className = "device-item";
+      row.innerHTML = `
+        <span>
+          <input type="radio" name="device" value="${dev.id}">
+          ${dev.name}
+        </span>
+        <span style="opacity:.5;font-size:12px;">${dev.cssW}×${dev.cssH}</span>
+      `;
+      list.appendChild(row);
     });
+  });
 }
 
-function show(){
-    if(!photos.length){
-        viewer.innerHTML = "<span>Нет фото</span>";
+function applyDevice(id) {
+  for (const g of DEVICES) {
+    for (const d of g.items) {
+      if (d.id === id) {
+        document.documentElement.style.setProperty("--device-width", d.cssW);
+        document.documentElement.style.setProperty("--device-height", d.cssH);
         return;
+      }
     }
-    viewer.innerHTML = `<img src="${photos[index]}" id="img">`;
-    document.getElementById("img").onclick = next;
+  }
 }
 
-function next(){
-    index = (index + 1) % photos.length;
-    show();
+/* ======================
+   ЛОГИКА ДОСТУПА
+   ====================== */
+
+if (localStorage.getItem(ACCESS_KEY) === "1") {
+  // код уже вводили
+  document.getElementById("authScreen").style.display = "none";
+  const savedDevice = localStorage.getItem(DEVICE_KEY);
+  if (savedDevice) {
+    applyDevice(savedDevice);
+    startApp();
+  } else {
+    showDeviceScreen();
+  }
 }
 
-function removePhoto(){
-    if(!photos.length) return;
-    photos.splice(index,1);
-    if(index > 0) index--;
-    save();
-    show();
+function checkCode() {
+  const input = document.getElementById("accessCode");
+  const err   = document.getElementById("authError");
+  const val   = (input.value || "").trim().toUpperCase();
+
+  if (!val) {
+    err.textContent = "Введите код";
+    return;
+  }
+
+  const idx = validCodes.indexOf(val);
+  if (idx === -1) {
+    err.textContent = "Неверный или использованный код";
+    return;
+  }
+
+  // одноразовый код — удаляем
+  validCodes.splice(idx, 1);
+  localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
+  localStorage.setItem(ACCESS_KEY, "1");
+
+  document.getElementById("authScreen").style.display = "none";
+  showDeviceScreen();
 }
 
-function toggleFull(){
-    full = !full;
-    document.body.classList.toggle("fullscreen", full);
+function showDeviceScreen() {
+  renderDeviceList();
+  document.getElementById("deviceScreen").style.display = "flex";
 }
 
-/* triple tap exit fullscreen */
-let taps = 0, timer = null;
-document.addEventListener("touchend", ()=>{
-    taps++;
-    if(taps === 3 && full){
-        toggleFull();
+function confirmDevice() {
+  const checked = document.querySelector('input[name="device"]:checked');
+  if (!checked) {
+    alert("Выберите модель iPhone");
+    return;
+  }
+  const id = checked.value;
+  localStorage.setItem(DEVICE_KEY, id);
+  applyDevice(id);
+  document.getElementById("deviceScreen").style.display = "none";
+  startApp();
+}
+
+function skipDevice() {
+  // если человек нажал "Позже" — ставим дефолт (например, iPhone 14)
+  const defaultId = "iphone14";
+  localStorage.setItem(DEVICE_KEY, defaultId);
+  applyDevice(defaultId);
+  document.getElementById("deviceScreen").style.display = "none";
+  startApp();
+}
+
+function startApp() {
+  document.getElementById("app").style.display = "flex";
+  show(); // отрисовать, если уже были фото
+}
+
+/* ======================
+   ГАЛЕРЕЯ (IndexedDB, 2 фото)
+   ====================== */
+
+let db;
+let photos = []; // массив Blob
+let indexPhoto = 0;
+const DB_NAME = "galleryDB_v2";
+const DB_STORE = "photos";
+
+const openReq = indexedDB.open(DB_NAME, 1);
+
+openReq.onupgradeneeded = e => {
+  db = e.target.result;
+  if (!db.objectStoreNames.contains(DB_STORE)) {
+    db.createObjectStore(DB_STORE, { autoIncrement: true });
+  }
+};
+
+openReq.onsuccess = e => {
+  db = e.target.result;
+  loadPhotos();
+};
+
+function loadPhotos() {
+  if (!db) return;
+  const tx = db.transaction(DB_STORE, "readonly");
+  const store = tx.objectStore(DB_STORE);
+  const req = store.getAll();
+  req.onsuccess = () => {
+    photos = req.result || [];
+    if (indexPhoto >= photos.length) indexPhoto = 0;
+    if (document.getElementById("app").style.display === "flex") {
+      show();
     }
-    clearTimeout(timer);
-    timer = setTimeout(()=> taps = 0, 350);
+  };
+}
+
+/* добавление файла */
+picker.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file || !db) return;
+
+  if (photos.length >= 2) {
+    // удаляем самое старое, потом добавляем
+    deleteFirstThenAdd(file);
+  } else {
+    addToDB(file);
+  }
 });
 
-function save(){ localStorage.setItem("photos", JSON.stringify(photos)); }
+function deleteFirstThenAdd(file) {
+  const tx = db.transaction(DB_STORE, "readwrite");
+  const store = tx.objectStore(DB_STORE);
+  const curReq = store.openCursor();
+  curReq.onsuccess = ev => {
+    const cursor = ev.target.result;
+    if (cursor) {
+      cursor.delete();
+      addToDB(file);
+    }
+  };
+}
 
-show();
+function addToDB(file) {
+  const tx = db.transaction(DB_STORE, "readwrite");
+  const store = tx.objectStore(DB_STORE);
+  store.add(file);
+  tx.oncomplete = () => {
+    picker.value = "";
+    loadPhotos();
+  };
+}
+
+/* показ */
+
+function show() {
+  const v = document.getElementById("viewer");
+
+  if (!photos.length) {
+    v.innerHTML = "<span>Нет фото</span>";
+    return;
+  }
+
+  const blob = photos[indexPhoto];
+  const url  = URL.createObjectURL(blob);
+  v.innerHTML = `<img src="${url}" id="currentPhoto">`;
+
+  // по клику — следующее
+  const img = document.getElementById("currentPhoto");
+  img.onclick = next;
+}
+
+/* следующее фото */
+function next() {
+  if (!photos.length) return;
+  indexPhoto = (indexPhoto + 1) % photos.length;
+  show();
+}
+
+/* удаление текущего */
+function removePhoto() {
+  if (!photos.length || !db) return;
+
+  const tx = db.transaction(DB_STORE, "readwrite");
+  const store = tx.objectStore(DB_STORE);
+  const curReq = store.openCursor();
+  let i = 0;
+
+  curReq.onsuccess = e => {
+    const cursor = e.target.result;
+    if (cursor) {
+      if (i === indexPhoto) cursor.delete();
+      i++;
+      cursor.continue();
+    }
+  };
+
+  tx.oncomplete = () => {
+    if (indexPhoto > 0) indexPhoto--;
+    loadPhotos();
+  };
+}
 </script>
 
 </body>
