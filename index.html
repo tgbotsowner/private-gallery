@@ -65,6 +65,7 @@
       background: #1fa553;
       color: #fff;
       font-size: 18px;
+      cursor: pointer;
     }
 
     #authError {
@@ -165,7 +166,6 @@
       border-top: 1px solid #222;
     }
 
-    #controls label,
     #controls button {
       background: #1c1c1c;
       border: none;
@@ -222,9 +222,11 @@
   <div id="app">
     <h3>Галерея</h3>
     <div id="viewer"><span>Нет фото</span></div>
-    <input type="file" id="picker" accept="image/*" hidden />
+
+    <!-- input создаём динамически -->
+    
     <div id="controls">
-      <label for="picker">Добавить</label>
+      <button onclick="pick()">Добавить</button>
       <button onclick="toggleFullScreen()">На весь экран</button>
       <button onclick="removePhoto()">Удалить</button>
       <button onclick="next()">Следующее</button>
@@ -238,18 +240,7 @@ const CODE_STORAGE = "validCodesDB";
 const ACCESS_KEY  = "gallery_access_granted";
 const DEVICE_KEY  = "gallery_device_model";
 
-let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [
-  "AB12CD","Q7X9PL","H2B4KM","W9T3ZA","M8F6CD",
-  "R4Y7QN","T5L2WP","Z9D8HF","B3N6VE","X7Q1JR",
-  "K2M9YS","ZX98QW","PL92AB","V7C3KD","JQ55LM",
-  "TR99WO","NP24QS","HF88ZX","KJ72FE","MD45CL",
-  "SA71PQ","DL39WE","VM84TZ","CF28RX","YU63NB",
-  "PO57AJ","GE11KV","TH44MS","WK06YD","RX73PL",
-  "BN19QF","ZS82GH","KC40VM","LU55RT","AJ90XE",
-  "QM81DC","PT36BW","FA67HL","ND04JQ","XV29KT",
-  "HG52PA","LB88CD","MS14QW","DT95ER","FW30UX",
-  "YP77SK","OV21BZ","CR68TM","JL59HQ","VE03NP"
-];
+let validCodes = JSON.parse(localStorage.getItem(CODE_STORAGE)) || [];
 
 localStorage.setItem(CODE_STORAGE, JSON.stringify(validCodes));
 
@@ -260,20 +251,16 @@ const DEVICES = [
   { group:"iPhone 12", items:[{id:"iphone12",name:"iPhone 12",cssW:390,cssH:844},{id:"iphone12pro",name:"iPhone 12 Pro",cssW:390,cssH:844},{id:"iphone12promax",name:"iPhone 12 Pro Max",cssW:428,cssH:926}] },
   { group:"iPhone 13", items:[{id:"iphone13",name:"iPhone 13",cssW:390,cssH:844},{id:"iphone13pro",name:"iPhone 13 Pro",cssW:390,cssH:844},{id:"iphone13promax",name:"iPhone 13 Pro Max",cssW:428,cssH:926}] },
   { group:"iPhone 14", items:[{id:"iphone14",name:"iPhone 14",cssW:390,cssH:844},{id:"iphone14plus",name:"iPhone 14 Plus",cssW:428,cssH:926},{id:"iphone14pro",name:"iPhone 14 Pro",cssW:393,cssH:852},{id:"iphone14promax",name:"iPhone 14 Pro Max",cssW:430,cssH:932}] },
-  { group:"iPhone 15", items:[{id:"iphone15",name:"iPhone 15",cssW:393,cssH:852},{id:"iphone15plus",name:"iPhone 15 Plus",cssW:430,cssH:932},{id:"iphone15pro",name:"iPhone 15 Pro",cssW:393,cssH:852},{id:"iphone15promax",name:"iPhone 15 Pro Max",cssW:430,cssH:932}] },
+  { group:"iPhone 15", items:[{id:"iphone15",name:"iPhone 15",cssW:393,cssH:852},{id:"iphone15plus",name:"iPhone 15 Plus",cssW:430,cssH:932},{id:"iphone15pro",name:"IPhone 15 Pro",cssW:393,cssH:852},{id:"iphone15promax",name:"IPhone 15 Pro Max",cssW:430,cssH:932}] },
 
-  /* ✨ Новые модели ✨ */
-
+  /* iPhone 16 */
   { group:"iPhone 16", items:[
-      { id:"iphone16",       name:"iPhone 16",        cssW:393, cssH:852 },
-      { id:"iphone16plus",   name:"iPhone 16 Plus",   cssW:430, cssH:932 },
-      { id:"iphone16pro",    name:"iPhone 16 Pro",    cssW:402, cssH:874 },
-      { id:"iphone16promax", name:"iPhone 16 Pro Max",cssW:442, cssH:960 },
-  ]},
-
-  /* iPhone 17 будут вставлены после выбора варианта */
+    { id:"iphone16", name:"iPhone 16", cssW:393, cssH:852 },
+    { id:"iphone16plus", name:"iPhone 16 Plus", cssW:430, cssH:932 },
+    { id:"iphone16pro", name:"iPhone 16 Pro", cssW:402, cssH:874 },
+    { id:"iphone16promax", name:"iPhone 16 Pro Max", cssW:442, cssH:960 }
+  ]}
 ];
-
 
 function renderDeviceList() {
   const list = document.getElementById("deviceList");
@@ -349,7 +336,7 @@ function startApp() {
   show();
 }
 
-/* ====================== FULLSCREEN BLOCK ====================== */
+/* ====================== FULLSCREEN MODE ====================== */
 
 function toggleFullScreen() {
   const viewer = document.getElementById("viewer");
@@ -368,6 +355,35 @@ document.addEventListener("touchend", () => {
   clearTimeout(tapTimer);
   tapTimer = setTimeout(() => tapCount = 0, 300);
 });
+
+/* ====================== FIX FOR IOS RE-ADD ====================== */
+
+function createNewPicker() {
+  const oldPicker = document.getElementById("picker");
+  if (oldPicker) oldPicker.remove();
+
+  const newPicker = document.createElement("input");
+  newPicker.type = "file";
+  newPicker.id = "picker";
+  newPicker.accept = "image/*";
+  newPicker.hidden = true;
+
+  newPicker.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file || !db) return;
+
+    if (photos.length >= 2) deleteFirstThenAdd(file);
+    else addToDB(file);
+  });
+
+  document.body.appendChild(newPicker);
+  window.picker = newPicker;
+}
+
+function pick() {
+  createNewPicker();
+  picker.click();
+}
 
 /* ====================== GALLERY ====================== */
 
@@ -404,14 +420,6 @@ function loadPhotos() {
   };
 }
 
-picker.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file || !db) return;
-
-  if (photos.length >= 2) deleteFirstThenAdd(file);
-  else addToDB(file);
-});
-
 function deleteFirstThenAdd(file) {
   const tx = db.transaction(DB_STORE, "readwrite");
   const store = tx.objectStore(DB_STORE);
@@ -428,7 +436,7 @@ function deleteFirstThenAdd(file) {
 function addToDB(file) {
   const tx = db.transaction(DB_STORE, "readwrite");
   tx.objectStore(DB_STORE).add(file);
-  tx.oncomplete = () => { picker.value = ""; loadPhotos(); };
+  tx.oncomplete = () => { loadPhotos(); };
 }
 
 function show() {
